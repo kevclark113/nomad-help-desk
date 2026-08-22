@@ -1,0 +1,60 @@
+/**
+ * Design tokens — the single source of truth for the app's look.
+ * Owned by the design layer (Jenn). See DESIGN.md.
+ *
+ * Nothing in src/lib/ imports this file, and this file imports no app logic.
+ * Change the look here; the calculator never needs to know.
+ */
+
+export const color = {
+  // Card / dark ground (top-lit sheen runs #213249 -> #131F2E)
+  ground: '#17263B',
+  groundSheenTop: '#213249',
+  groundSheenBottom: '#131F2E',
+
+  // Text
+  paper: '#F6F0E4', // primary text on dark
+  muted: '#AEBACD',
+
+  // Accents / shapes
+  cobalt: '#2E7BCB',
+  teal: '#35B0BC', // orb
+  coral: '#ED8A6F', // progress / heat
+  marigold: '#F3B33E', // pills, dots, accents
+  rose: '#DA6EA6', // orb
+  olive: '#9DBB44', // positive status
+  plum: '#6A5A92',
+} as const
+
+export const radius = {
+  card: '22px',
+  chunky: '20px',
+  pill: '999px',
+} as const
+
+export const space = {
+  xs: '4px',
+  sm: '8px',
+  md: '16px',
+  lg: '24px',
+  xl: '32px',
+} as const
+
+export const type = {
+  display: "'Clash Display', 'Cabinet Grotesk', system-ui, sans-serif",
+  body: "'Inter', 'DM Sans', system-ui, sans-serif",
+  bigCount: '54px',
+  heading: '17px',
+} as const
+
+export const motion = {
+  // Cold-start entrance only. Honor prefers-reduced-motion at call sites.
+  orbBounce: '0.7s',
+  orbStagger: '0.12s',
+  contentDrift: '0.4s',
+  sequenceMax: '1.3s',
+  spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+} as const
+
+export const theme = { color, radius, space, type, motion } as const
+export type Theme = typeof theme
