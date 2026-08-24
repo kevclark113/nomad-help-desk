@@ -180,19 +180,46 @@ body {
 }
 
 @media (max-width: 640px) {
+  /* Single-column hero: the earth becomes a faint full-card backdrop and the
+     text takes the full width on top, so nothing overlaps or gets crushed. */
   .zone-col {
-    width: 62%;
-    padding: 26px 24px 24px;
-    gap: 14px;
+    width: 100%;
+    padding: 24px 22px 22px;
+    gap: 13px;
   }
   .zone-title {
     font-size: 30px;
+    white-space: normal;
+  }
+  .zone-pill-row {
+    flex-wrap: wrap;
   }
   .zone-count {
-    font-size: 68px;
+    font-size: 64px;
   }
-  .zone-status-row {
-    padding-right: 12px;
+  .zone-count-sub {
+    font-size: 18px;
+  }
+  .zone-earth {
+    width: 100%;
+    opacity: 0.16;
+  }
+  .zone-earth img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+@media (max-width: 420px) {
+  #root {
+    padding: 20px 14px 56px;
+  }
+  .zone-title {
+    font-size: 26px;
+  }
+  .zone-count {
+    font-size: 56px;
   }
 }
 
