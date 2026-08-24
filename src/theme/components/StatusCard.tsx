@@ -1,6 +1,6 @@
 import type { SchengenStatus } from '../../lib/schengen'
 import { LIMIT_DAYS } from '../../lib/schengen'
-import { formatHuman } from '../../lib/dateUtils'
+import { formatHuman, type ISODate } from '../../lib/dateUtils'
 import { color, radius, type } from '../tokens'
 import { riskOf, riskLabel, riskColor } from '../status'
 import { Orb } from './Orb'
@@ -9,18 +9,24 @@ import { Orb } from './Orb'
  * The centerpiece. Dark navy card, shaded orbs bleeding off the right corners,
  * big day count, coral progress bar, marigold footer. See DESIGN.md.
  */
-export function StatusCard({ status }: { status: SchengenStatus }) {
-  const { daysUsed, daysRemaining, nextResetDate } = status
-  const risk = riskOf(daysRemaining)
+export function StatusCard({ status, asOf }: { status: SchengenStatus; asOf: ISODate }) {
+  const { daysUsed, daysRemaining, nextResetDate, projectedViolationDate } = status
+  const risk = riskOf(status, asOf)
   const pct = Math.min(100, Math.max(0, (daysUsed / LIMIT_DAYS) * 100))
 
   const remainingText =
     daysRemaining >= 0
       ? `${daysRemaining} days left`
       : `over by ${Math.abs(daysRemaining)} days`
-  const resetText = nextResetDate
-    ? `window resets ${formatHuman(nextResetDate)}`
-    : 'no days used yet'
+
+  // When a saved future trip will breach 90, lead the footer with that warning;
+  // otherwise show the normal reset info.
+  const secondaryText =
+    risk === 'will-exceed' && projectedViolationDate
+      ? `exceeds 90 on ${formatHuman(projectedViolationDate)}`
+      : nextResetDate
+        ? `window resets ${formatHuman(nextResetDate)}`
+        : 'no days used yet'
 
   return (
     <section
@@ -160,12 +166,13 @@ export function StatusCard({ status }: { status: SchengenStatus }) {
               width: 8,
               height: 8,
               borderRadius: '50%',
-              background: color.marigold,
+              background:
+                risk === 'over' || risk === 'will-exceed' ? color.coral : color.marigold,
               flex: '0 0 auto',
             }}
           />
-          <span>
-            {remainingText} · {resetText}
+          <span style={{ color: risk === 'over' ? color.coral : color.muted }}>
+            {remainingText} · {secondaryText}
           </span>
         </div>
       </div>

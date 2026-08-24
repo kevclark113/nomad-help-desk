@@ -15,7 +15,8 @@ export default function App() {
   const trips = useLiveQuery(getTrips, [], [] as Trip[])
   const [editing, setEditing] = useState<Trip | null>(null)
 
-  const status = schengenStatus(trips, todayISO())
+  const today = todayISO()
+  const status = schengenStatus(trips, today)
 
   async function handleSubmit(data: Omit<Trip, 'id'>) {
     if (editing?.id !== undefined) {
@@ -45,7 +46,7 @@ export default function App() {
         </h1>
       </header>
 
-      <StatusCard status={status} />
+      <StatusCard status={status} asOf={today} />
 
       <Panel>
         <h2 style={{ fontSize: 14, margin: '0 0 12px', color: color.paper }}>
