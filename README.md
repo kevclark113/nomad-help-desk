@@ -6,9 +6,9 @@ window resets, and whether a planned trip would push you over.
 
 **Live app:** https://nomadhelpdesk.vercel.app
 
-It's a **local-first, installable PWA** — no accounts, no server, works offline.
-Your trips are stored privately in your own browser (IndexedDB); nothing is
-shared or synced between devices.
+It's an **installable, offline-first PWA**. Accounts are **optional**: use it
+instantly with local-only storage (IndexedDB, private to your browser), or sign
+in with Google / email to back up your trips and sync them across devices.
 
 > On a phone, open the link and use **"Add to Home Screen"** to install it and
 > use it offline like a native app.
@@ -17,9 +17,19 @@ shared or synced between devices.
 
 - **React + Vite**, TypeScript
 - Installable PWA via `vite-plugin-pwa` (manifest + offline service worker)
-- Local-first storage with **Dexie** (IndexedDB); dates stored as `YYYY-MM-DD`
-  with date-only math to avoid timezone bugs
+- Offline-first storage: **Dexie** (IndexedDB) signed out, **Firebase/Firestore**
+  signed in with offline persistence + sync; dates stored as `YYYY-MM-DD` with
+  date-only math to avoid timezone bugs
+- **Firebase Auth** (Google + Email/Password), optional accounts; the Firebase
+  SDK is lazy-loaded so signed-out visitors don't download it
 - **Vitest** for the 90/180 engine (see `src/lib/schengen.ts`)
+
+## Configuration
+
+Accounts require Firebase web config via `VITE_FIREBASE_*` env vars — copy
+`.env.example` to `.env.local` for local dev, and set the same in Vercel for
+production. Without them the app still runs fully in local-only mode. Firestore
+access is governed by `firestore.rules` (each user can touch only their own trips).
 
 ## Project layout
 

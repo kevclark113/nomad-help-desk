@@ -32,8 +32,11 @@
 - **Top row:** "Schengen area" (Paper, ~17px medium) left; a Marigold pill "rolling 90 / 180" (dark text) right.
 - **Big count:** "62" large (~54px, Paper), a clear gap, then "/ 90 days used" (muted). An Olive "on track" chip sits far right.
 - **Progress bar:** Coral fill (= days-used %) on a dark track, with a faint lighter sheen along the fill.
-- **Footer:** a Marigold dot + "28 days left · window resets 12 Nov" (muted).
-- **Status chip** wording scales with risk: "on track" → "cutting it close" → "over."
+- **Footer:** a Marigold dot + "28 days left · 1 day frees up 12 Nov" (muted). When over, the dot + text turn Coral and read "over by N days"; when a saved future trip will breach, it reads "exceeds 90 on <date>". (We say "1 day frees up …", not "window resets" — only the single oldest day rolls off; it isn't a reset to zero.)
+- **Status chip** wording scales with risk: "on track" (Olive) → "cutting it close" (Marigold) → "will exceed" (Coral, for a saved *future* breach) → "over" (Coral, currently over). A past overstay that has rolled out of the 180-day window is **not** shown as over — the chip reflects today's status. The trip that causes a breach also gets a Coral accent + "crosses 90 days on <date>" in the trips list.
+
+## Panels & controls
+Below the status card, each section (Add a trip, Your trips, Plan a trip, Account) is a subtle rounded **Panel** (faint translucent surface + hairline border) — quiet containers so the status card stays the hero. Controls live in `src/theme/components/ui.tsx`: dark-scheme inputs, pill Buttons (`solid` Cobalt / `ghost` / `danger` Coral). The **Account** panel is deliberately understated — "Continue with Google", an "or" divider, email/password, and a sign-in/create toggle; signed in it collapses to an Olive-dot "Synced across devices" line + Sign out. It's optional, so it must never shout over the calculator.
 
 ## Motion (cold-start only)
 - On app launch **only** (never on every navigation): the two orbs **bounce into place** first (spring/overshoot, ~0.7s, small stagger between them), then the card's contents **drift up** into place (fade + slight upward translate, staggered). Whole sequence under ~1.3s.
