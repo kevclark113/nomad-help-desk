@@ -63,6 +63,7 @@ export default function App() {
         <h2 style={{ fontSize: 14, margin: '0 0 12px', color: color.paper }}>Your trips</h2>
         <TripsList
           trips={trips}
+          violationDate={status.projectedViolationDate}
           onEdit={setEditing}
           onDelete={async (id) => {
             if (editing?.id === id) setEditing(null)
