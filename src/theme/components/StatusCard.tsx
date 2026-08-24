@@ -25,7 +25,7 @@ export function StatusCard({ status, asOf }: { status: SchengenStatus; asOf: ISO
     risk === 'will-exceed' && projectedViolationDate
       ? `exceeds 90 on ${formatHuman(projectedViolationDate)}`
       : nextResetDate
-        ? `window resets ${formatHuman(nextResetDate)}`
+        ? `1 day frees up ${formatHuman(nextResetDate)}`
         : 'no days used yet'
 
   return (
