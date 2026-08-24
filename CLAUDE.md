@@ -69,6 +69,18 @@ Optional Firebase accounts layered on without disturbing the local-first core.
 - Keep the seam clean so design changes never touch calculation logic, and vice versa.
 - Both work via their own Claude on the shared GitHub repo; **this file and `DESIGN.md` are the shared source of truth.**
 
+## Git & deploy workflow (IMPORTANT — read before pushing)
+Production is on Vercel, tied to **Kevin's** account. A push to `main` from anyone
+else does **not** trigger a deploy, so **never push directly to `main`.**
+
+- **Everyone except Kevin (e.g. Jenn's Claude): open a Pull Request.**
+  1. Branch off `main` (e.g. `git switch -c design/<short-name>`).
+  2. Commit the work; run `npm run build` and `npm test` first — a PR must build clean and keep tests green.
+  3. Push the branch and open a PR against `main`: `gh pr create --fill --base main`.
+  4. Leave it for Kevin to review and merge. Do not merge your own PR.
+- **Kevin:** review the PR, then **merge it** — merging as the Vercel-authorized user triggers the production deploy. If a merge ever doesn't kick off a deploy, push an empty commit to `main` to trigger it: `git commit --allow-empty -m "trigger deploy" && git push`.
+- Keep PRs focused (one coherent change) and describe what changed and why, so review is quick.
+
 ## Build order (history — all shipped)
 **v1**
 1. Scaffold: Vite + React + TS + PWA config + Dexie schema + basic Trip CRUD.
