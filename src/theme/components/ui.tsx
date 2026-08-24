@@ -55,15 +55,20 @@ export function Button({ variant = 'solid', style, ...rest }: ButtonProps) {
 
 export function Field({
   label,
+  style,
   ...rest
 }: { label: string } & InputHTMLAttributes<HTMLInputElement>) {
+  // `style` sizes the label wrapper (layout: flex/width). The input always
+  // fills that wrapper's width — never apply flex sizing directly to the input,
+  // or its basis becomes a *height* inside this column and it grows tall.
   return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 0 }}>
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 0, ...style }}>
       <span style={{ fontSize: 12, color: color.muted, fontWeight: 600 }}>{label}</span>
       <input
         style={{
           font: 'inherit',
           fontSize: 14,
+          width: '100%',
           color: color.paper,
           background: 'rgba(0,0,0,0.25)',
           border: '1px solid rgba(255,255,255,0.12)',
