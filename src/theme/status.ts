@@ -18,13 +18,16 @@ export const CLOSE_THRESHOLD = 15
 export function riskOf(status: SchengenStatus, asOf: ISODate): Risk {
   const { daysRemaining, projectedViolationDate } = status
 
-  // Already over the limit as of today.
+  // The chip reflects TODAY's rolling window. A past breach that has since
+  // rolled out of the 180-day window leaves you compliant again, so it does not
+  // make the chip "over" (the trips list still flags the historical crossing).
+
+  // Currently over the limit.
   if (daysRemaining < 0) return 'over'
 
-  // A recorded trip breaches 90 somewhere in the timeline.
-  if (projectedViolationDate !== null) {
-    // On or before today counts as currently over; in the future it's a warning.
-    return toDayNumber(projectedViolationDate) <= toDayNumber(asOf) ? 'over' : 'will-exceed'
+  // Compliant today, but a recorded FUTURE trip will breach 90.
+  if (projectedViolationDate !== null && toDayNumber(projectedViolationDate) > toDayNumber(asOf)) {
+    return 'will-exceed'
   }
 
   if (daysRemaining <= CLOSE_THRESHOLD) return 'close'

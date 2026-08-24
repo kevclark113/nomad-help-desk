@@ -32,12 +32,13 @@ describe('riskOf', () => {
     ).toBe('will-exceed')
   })
 
-  it('is "over" when the projected breach is today or already passed', () => {
+  it('reflects today when a past breach has rolled out (not "over")', () => {
+    // Positive days remaining today + breach already passed → current status wins.
     expect(
-      riskOf({ ...base, daysRemaining: 5, projectedViolationDate: asOf }, asOf),
-    ).toBe('over')
+      riskOf({ ...base, daysRemaining: 90, projectedViolationDate: '2025-04-20' }, asOf),
+    ).toBe('on-track')
     expect(
       riskOf({ ...base, daysRemaining: 5, projectedViolationDate: '2026-08-01' }, asOf),
-    ).toBe('over')
+    ).toBe('close')
   })
 })
