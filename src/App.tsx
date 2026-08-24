@@ -10,6 +10,8 @@ import { Panel } from './theme/components/ui'
 import { TripEditor } from './components/TripEditor'
 import { TripsList } from './components/TripsList'
 import { PlanTrip } from './components/PlanTrip'
+import { AccountPanel } from './components/AccountPanel'
+import { firebaseEnabled } from './lib/firebase'
 
 export default function App() {
   const trips = useLiveQuery(getTrips, [], [] as Trip[])
@@ -76,6 +78,13 @@ export default function App() {
         <h2 style={{ fontSize: 14, margin: '0 0 12px', color: color.paper }}>Plan a trip</h2>
         <PlanTrip trips={trips} />
       </Panel>
+
+      {firebaseEnabled && (
+        <Panel>
+          <h2 style={{ fontSize: 14, margin: '0 0 12px', color: color.paper }}>Account</h2>
+          <AccountPanel />
+        </Panel>
+      )}
     </div>
   )
 }
