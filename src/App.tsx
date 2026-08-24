@@ -9,6 +9,7 @@ import { StatusCard } from './theme/components/StatusCard'
 import { Panel } from './theme/components/ui'
 import { TripEditor } from './components/TripEditor'
 import { TripsList } from './components/TripsList'
+import { PlanTrip } from './components/PlanTrip'
 
 export default function App() {
   const trips = useLiveQuery(getTrips, [], [] as Trip[])
@@ -67,6 +68,11 @@ export default function App() {
             await deleteTrip(id)
           }}
         />
+      </Panel>
+
+      <Panel>
+        <h2 style={{ fontSize: 14, margin: '0 0 12px', color: color.paper }}>Plan a trip</h2>
+        <PlanTrip trips={trips} />
       </Panel>
     </div>
   )
