@@ -182,6 +182,11 @@ body {
 @media (max-width: 640px) {
   /* Single-column hero: the earth becomes a faint full-card backdrop and the
      text takes the full width on top, so nothing overlaps or gets crushed. */
+  /* Extra height gives the portrait earth room to render larger while staying
+     fully uncropped (object-fit: contain is limited by the card's height). */
+  .zone-card {
+    min-height: 360px;
+  }
   .zone-col {
     width: 100%;
     padding: 24px 22px 22px;
@@ -202,12 +207,15 @@ body {
   }
   .zone-earth {
     width: 100%;
-    opacity: 0.16;
+    opacity: 0.2;
   }
   .zone-earth img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    /* Show the whole sphere (no top/bottom crop) as a centered backdrop. */
+    object-fit: contain;
+    /* Nudge the sphere down into the lower gap (clips only bottom padding). */
+    transform: translateY(30px);
   }
 }
 
