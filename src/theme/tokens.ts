@@ -41,7 +41,7 @@ export const space = {
 } as const
 
 export const type = {
-  display: "'Clash Display', 'Cabinet Grotesk', system-ui, sans-serif",
+  display: "'Baloo 2', 'Clash Display', 'Cabinet Grotesk', system-ui, sans-serif",
   body: "'Inter', 'DM Sans', system-ui, sans-serif",
   bigCount: '54px',
   heading: '17px',

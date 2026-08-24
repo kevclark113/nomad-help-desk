@@ -63,6 +63,23 @@ export function maxDate(a: ISODate, b: ISODate): ISODate {
   return toDayNumber(a) >= toDayNumber(b) ? a : b
 }
 
+const MONTHS_SHORT = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+]
+
+/** Format an ISO date for display, e.g. `2026-11-12` → `12 Nov` (or `12 Nov 2026`). */
+export function formatHuman(date: ISODate, withYear = false): string {
+  const [y, m, d] = date.split('-').map(Number)
+  const base = `${d} ${MONTHS_SHORT[m - 1]}`
+  return withYear ? `${base} ${y}` : base
+}
+
+/** Inclusive day count for a trip: both entry and exit days count. */
+export function inclusiveDays(entry: ISODate, exit: ISODate): number {
+  return daysBetween(entry, exit) + 1
+}
+
 /** Today as an ISO date in the user's local timezone. */
 export function todayISO(): ISODate {
   const now = new Date()

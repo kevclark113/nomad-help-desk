@@ -1,29 +1,73 @@
-import { color, radius, space, type } from './theme/tokens'
+import { useState } from 'react'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { getTrips, addTrip, updateTrip, deleteTrip } from './lib/db'
+import type { Trip } from './lib/types'
+import { schengenStatus } from './lib/schengen'
+import { todayISO } from './lib/dateUtils'
+import { color, type } from './theme/tokens'
+import { StatusCard } from './theme/components/StatusCard'
+import { Panel } from './theme/components/ui'
+import { TripEditor } from './components/TripEditor'
+import { TripsList } from './components/TripsList'
 
-/**
- * Phase 1 placeholder screen. The real single-view status card, trips list,
- * and "plan a trip" check arrive in later phases (see CLAUDE.md build order).
- */
 export default function App() {
+  const trips = useLiveQuery(getTrips, [], [] as Trip[])
+  const [editing, setEditing] = useState<Trip | null>(null)
+
+  const status = schengenStatus(trips, todayISO())
+
+  async function handleSubmit(data: Omit<Trip, 'id'>) {
+    if (editing?.id !== undefined) {
+      await updateTrip(editing.id, data)
+      setEditing(null)
+    } else {
+      await addTrip(data)
+    }
+  }
+
   return (
-    <main
+    <div
       style={{
-        background: `linear-gradient(160deg, ${color.groundSheenTop}, ${color.groundSheenBottom})`,
-        color: color.paper,
-        borderRadius: radius.card,
-        padding: space.xl,
-        maxWidth: 420,
         width: '100%',
-        boxShadow: '0 24px 60px rgba(0,0,0,0.45)',
+        maxWidth: 460,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
       }}
     >
-      <p style={{ margin: 0, color: color.marigold, fontWeight: 600 }}>Nomad Help Desk</p>
-      <h1 style={{ fontFamily: type.display, fontSize: 28, margin: `${space.sm} 0` }}>
-        Schengen tracker
-      </h1>
-      <p style={{ color: color.muted, margin: 0 }}>
-        Scaffold ready. The 90/180 engine and status card come next.
-      </p>
-    </main>
+      <header style={{ padding: '0 4px' }}>
+        <p style={{ margin: 0, color: color.marigold, fontWeight: 700, letterSpacing: '0.02em' }}>
+          Nomad Help Desk
+        </p>
+        <h1 style={{ fontFamily: type.display, fontSize: 22, margin: '2px 0 0', fontWeight: 700 }}>
+          Schengen tracker
+        </h1>
+      </header>
+
+      <StatusCard status={status} />
+
+      <Panel>
+        <h2 style={{ fontSize: 14, margin: '0 0 12px', color: color.paper }}>
+          {editing ? 'Edit trip' : 'Add a trip'}
+        </h2>
+        <TripEditor
+          editing={editing}
+          onSubmit={handleSubmit}
+          onCancel={() => setEditing(null)}
+        />
+      </Panel>
+
+      <Panel>
+        <h2 style={{ fontSize: 14, margin: '0 0 12px', color: color.paper }}>Your trips</h2>
+        <TripsList
+          trips={trips}
+          onEdit={setEditing}
+          onDelete={async (id) => {
+            if (editing?.id === id) setEditing(null)
+            await deleteTrip(id)
+          }}
+        />
+      </Panel>
+    </div>
   )
 }
