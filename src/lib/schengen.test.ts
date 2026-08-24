@@ -1,12 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { schengenStatus, checkPlannedTrip, WINDOW_DAYS, LIMIT_DAYS } from './schengen'
 import { addDays } from './dateUtils'
-import type { Trip } from './types'
+import type { TripDates } from './types'
 
-const trip = (entryDate: string, exitDate: string, note?: string): Trip => ({
+const trip = (entryDate: string, exitDate: string): TripDates => ({
   entryDate,
   exitDate,
-  note,
 })
 
 describe('schengenStatus — basics', () => {

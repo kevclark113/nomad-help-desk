@@ -10,7 +10,7 @@
  * count as days present (inclusive counting).
  */
 
-import type { Trip } from './types'
+import type { TripDates } from './types'
 import {
   addDays,
   fromDayNumber,
@@ -57,7 +57,7 @@ export interface PlannedTripCheck {
 type Interval = { start: number; end: number } // inclusive day numbers
 
 /** Convert trips to sorted, merged inclusive day-number intervals. */
-function mergedIntervals(trips: Trip[]): Interval[] {
+function mergedIntervals(trips: readonly TripDates[]): Interval[] {
   const intervals = trips
     .map((t) => ({ start: toDayNumber(t.entryDate), end: toDayNumber(t.exitDate) }))
     .filter((iv) => iv.end >= iv.start)
@@ -107,7 +107,7 @@ function firstViolation(merged: Interval[]): number | null {
   return null
 }
 
-export function schengenStatus(trips: Trip[], asOf: ISODate): SchengenStatus {
+export function schengenStatus(trips: readonly TripDates[], asOf: ISODate): SchengenStatus {
   const merged = mergedIntervals(trips)
   const asOfNum = toDayNumber(asOf)
   const windowStartNum = asOfNum - (WINDOW_DAYS - 1)
@@ -138,11 +138,11 @@ export function schengenStatus(trips: Trip[], asOf: ISODate): SchengenStatus {
 }
 
 export function checkPlannedTrip(
-  trips: Trip[],
+  trips: readonly TripDates[],
   plannedEntry: ISODate,
   plannedExit: ISODate,
 ): PlannedTripCheck {
-  const planned: Trip = { entryDate: plannedEntry, exitDate: plannedExit }
+  const planned: TripDates = { entryDate: plannedEntry, exitDate: plannedExit }
   const combined = mergedIntervals([...trips, planned])
 
   const violation = firstViolation(combined)

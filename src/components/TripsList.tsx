@@ -19,7 +19,7 @@ export function TripsList({
   /** The date the 90-day limit is first breached, if any — used to flag the offending trip. */
   violationDate: ISODate | null
   onEdit: (trip: Trip) => void
-  onDelete: (id: number) => void
+  onDelete: (id: string) => void
 }) {
   if (trips.length === 0) {
     return (
@@ -82,7 +82,7 @@ export function TripsList({
               </Button>
               <Button
                 variant="danger"
-                onClick={() => t.id !== undefined && onDelete(t.id)}
+                onClick={() => onDelete(t.id)}
                 aria-label="Delete trip"
               >
                 Delete

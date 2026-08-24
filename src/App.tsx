@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { useLiveQuery } from 'dexie-react-hooks'
-import { getTrips, addTrip, updateTrip, deleteTrip } from './lib/db'
-import type { Trip } from './lib/types'
+import type { NewTrip, Trip } from './lib/types'
 import { schengenStatus } from './lib/schengen'
 import { todayISO } from './lib/dateUtils'
+import { useTripStore } from './lib/useTripStore'
 import { color, type } from './theme/tokens'
 import { StatusCard } from './theme/components/StatusCard'
 import { Panel } from './theme/components/ui'
@@ -14,14 +13,14 @@ import { AccountPanel } from './components/AccountPanel'
 import { firebaseEnabled } from './lib/firebase'
 
 export default function App() {
-  const trips = useLiveQuery(getTrips, [], [] as Trip[])
+  const { trips, addTrip, updateTrip, deleteTrip } = useTripStore()
   const [editing, setEditing] = useState<Trip | null>(null)
 
   const today = todayISO()
   const status = schengenStatus(trips, today)
 
-  async function handleSubmit(data: Omit<Trip, 'id'>) {
-    if (editing?.id !== undefined) {
+  async function handleSubmit(data: NewTrip) {
+    if (editing) {
       await updateTrip(editing.id, data)
       setEditing(null)
     } else {
