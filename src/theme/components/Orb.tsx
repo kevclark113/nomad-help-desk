@@ -15,15 +15,18 @@ export function Orb({
   size,
   hue,
   style,
+  className,
 }: {
   size: number
   hue: Hue
   style?: CSSProperties
+  className?: string
 }) {
   const p = palettes[hue]
   return (
     <div
       aria-hidden="true"
+      className={className}
       style={{
         position: 'absolute',
         width: size,

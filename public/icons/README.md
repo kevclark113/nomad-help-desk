@@ -1,11 +1,14 @@
 # PWA icons
 
-The manifest (`vite.config.ts`) references:
+`pwa-192.png` and `pwa-512.png` are **generated** from an inline SVG mark by
+`scripts/gen-icons.mjs` (a coral 90/180 progress ring with shaded teal/rose
+orbs — font-free, so it rasterizes identically anywhere).
 
-- `pwa-192.png` — 192×192
-- `pwa-512.png` — 512×512 (also used as `maskable`)
+Regenerate after changing the mark:
 
-These raw PNGs are **not yet added**. Until they exist, the install prompt
-falls back to the SVG favicon and these paths 404. Drop the final icons here
-(derived from the mural aesthetic in `DESIGN.md`) as part of the offline/polish
-phase. `favicon.svg` in `public/` is the current placeholder mark.
+```
+npm run icons
+```
+
+The manifest (`vite.config.ts`) references both, and uses the 512 as the
+`maskable` icon. `public/favicon.svg` is the matching browser-tab mark.

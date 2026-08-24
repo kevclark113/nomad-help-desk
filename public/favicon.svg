@@ -1,7 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="t" cx="32%" cy="28%" r="75%">
+      <stop offset="0" stop-color="#9CE6EC"/>
+      <stop offset="0.42" stop-color="#35B0BC"/>
+      <stop offset="1" stop-color="#166069"/>
+    </radialGradient>
+    <radialGradient id="r" cx="32%" cy="28%" r="75%">
+      <stop offset="0" stop-color="#F6C2DC"/>
+      <stop offset="0.42" stop-color="#DA6EA6"/>
+      <stop offset="1" stop-color="#9A4573"/>
+    </radialGradient>
+  </defs>
   <rect width="64" height="64" rx="14" fill="#17263B"/>
-  <circle cx="44" cy="22" r="14" fill="#35B0BC"/>
-  <circle cx="24" cy="44" r="9" fill="#DA6EA6"/>
-  <text x="32" y="40" font-family="system-ui, sans-serif" font-size="22" font-weight="700"
-        fill="#F6F0E4" text-anchor="middle">90</text>
+  <circle cx="32" cy="32" r="15" fill="none" stroke="rgba(0,0,0,0.3)" stroke-width="4.5"/>
+  <circle cx="32" cy="32" r="15" fill="none" stroke="#ED8A6F" stroke-width="4.5"
+          stroke-linecap="round" stroke-dasharray="58.4 94.2" transform="rotate(-90 32 32)"/>
+  <circle cx="49" cy="19" r="8" fill="url(#t)"/>
+  <circle cx="19" cy="47" r="5" fill="url(#r)"/>
 </svg>

@@ -35,10 +35,20 @@ export function StatusCard({ status }: { status: SchengenStatus }) {
       }}
     >
       {/* Orbs bleed off the right corners; card overflow clips them. */}
-      <Orb hue="teal" size={150} style={{ top: -54, right: -46, zIndex: 0 }} />
-      <Orb hue="rose" size={92} style={{ bottom: -40, right: -22, zIndex: 0 }} />
+      <Orb
+        hue="teal"
+        size={150}
+        className="orb-enter"
+        style={{ top: -54, right: -46, zIndex: 0 }}
+      />
+      <Orb
+        hue="rose"
+        size={92}
+        className="orb-enter orb-enter--2"
+        style={{ bottom: -40, right: -22, zIndex: 0 }}
+      />
 
-      <div style={{ position: 'relative', zIndex: 1 }}>
+      <div className="content-enter" style={{ position: 'relative', zIndex: 1 }}>
         {/* Top row */}
         <div
           style={{
