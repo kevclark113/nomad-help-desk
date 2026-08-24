@@ -1,14 +1,29 @@
+import type { CSSProperties } from 'react'
 import type { SchengenStatus } from '../../lib/schengen'
 import { LIMIT_DAYS } from '../../lib/schengen'
 import { formatHuman, type ISODate } from '../../lib/dateUtils'
-import { color, radius, type } from '../tokens'
-import { riskOf, riskLabel, riskColor } from '../status'
-import { Orb } from './Orb'
+import { color } from '../tokens'
+import { riskOf, riskLabel, type Risk } from '../status'
+
+/** Served from public/ at the site root by Vite. */
+const earthUrl = '/earth.png'
 
 /**
- * The centerpiece. Dark navy card, shaded orbs bleeding off the right corners,
- * big day count, coral progress bar, marigold footer. See DESIGN.md.
+ * The centerpiece — the wide "Schengen Zone" card: dark navy, blue text glow,
+ * amber/lime pills, a big day count, coral progress bar, and the illustrated
+ * earth bleeding off the right edge. Styling lives in index.css (.zone-*);
+ * this supplies the live data and the two dynamic bits (fill width, status
+ * pill color). See the Schengen Zone design study.
  */
+
+/** Layered pill fill + non-black ink per risk level. */
+const statusStyle: Record<Risk, CSSProperties> = {
+  'on-track': { background: 'linear-gradient(180deg, #b6e06e, #a4d65e)', color: '#16341a' },
+  close: { background: 'linear-gradient(180deg, #f6d46a, #f2c94c)', color: '#4a3a08' },
+  'will-exceed': { background: 'linear-gradient(180deg, #f79070, #e05f45)', color: '#4a1b0c' },
+  over: { background: 'linear-gradient(180deg, #f79070, #e05f45)', color: '#4a1b0c' },
+}
+
 export function StatusCard({ status, asOf }: { status: SchengenStatus; asOf: ISODate }) {
   const { daysUsed, daysRemaining, nextResetDate, projectedViolationDate } = status
   const risk = riskOf(status, asOf)
@@ -29,152 +44,49 @@ export function StatusCard({ status, asOf }: { status: SchengenStatus; asOf: ISO
         : 'no days used yet'
 
   return (
-    <section
-      style={{
-        position: 'relative',
-        overflow: 'hidden',
-        borderRadius: radius.card,
-        padding: '26px 24px 22px',
-        background: `linear-gradient(160deg, ${color.groundSheenTop} 0%, ${color.ground} 46%, ${color.groundSheenBottom} 100%)`,
-        boxShadow: '0 28px 64px rgba(0,0,0,0.5)',
-        isolation: 'isolate',
-      }}
-    >
-      {/* Orbs bleed off the right corners; card overflow clips them. */}
-      <Orb
-        hue="teal"
-        size={150}
-        className="orb-enter"
-        style={{ top: -54, right: -46, zIndex: 0 }}
-      />
-      <Orb
-        hue="rose"
-        size={92}
-        className="orb-enter orb-enter--2"
-        style={{ bottom: -40, right: -22, zIndex: 0 }}
-      />
+    <section className="zone-card">
+      <div className="zone-col content-enter">
+        <h1 className="zone-title">Schengen Zone</h1>
 
-      <div className="content-enter" style={{ position: 'relative', zIndex: 1 }}>
-        {/* Top row */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-          }}
-        >
-          <span style={{ fontSize: type.heading, fontWeight: 500, color: color.paper }}>
-            Schengen area
-          </span>
-          <span
-            style={{
-              background: color.marigold,
-              color: color.groundSheenBottom,
-              fontSize: 12,
-              fontWeight: 700,
-              padding: '5px 11px',
-              borderRadius: radius.pill,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            rolling 90 / 180
-          </span>
-        </div>
-
-        {/* Big count */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'space-between',
-            gap: 12,
-            margin: '18px 0 16px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, minWidth: 0 }}>
-            <span
-              style={{
-                fontFamily: type.display,
-                fontSize: type.bigCount,
-                fontWeight: 700,
-                lineHeight: 1,
-                color: color.paper,
-                letterSpacing: '-0.02em',
-              }}
-            >
-              {daysUsed}
-            </span>
-            <span style={{ color: color.muted, fontSize: 15 }}>/ {LIMIT_DAYS} days used</span>
-          </div>
-          <span
-            style={{
-              alignSelf: 'center',
-              background: 'rgba(255,255,255,0.06)',
-              border: `1px solid ${riskColor[risk]}`,
-              color: riskColor[risk],
-              fontSize: 12,
-              fontWeight: 700,
-              padding: '4px 10px',
-              borderRadius: radius.pill,
-              whiteSpace: 'nowrap',
-            }}
-          >
+        <div className="zone-pill-row">
+          <span className="zone-pill">rolling 90 / 180</span>
+          <span className="zone-status" style={statusStyle[risk]}>
             {riskLabel[risk]}
           </span>
         </div>
 
-        {/* Progress bar */}
+        <div className="zone-count-row">
+          <span className="zone-count">{daysUsed}</span>
+          <span className="zone-count-sub">/ {LIMIT_DAYS} days used</span>
+        </div>
+
         <div
+          className="zone-track"
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={LIMIT_DAYS}
           aria-valuenow={daysUsed}
           aria-label="Schengen days used"
-          style={{
-            height: 12,
-            borderRadius: radius.pill,
-            background: 'rgba(0,0,0,0.28)',
-            overflow: 'hidden',
-          }}
         >
-          <div
-            style={{
-              width: `${pct}%`,
-              height: '100%',
-              borderRadius: radius.pill,
-              background: `linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0) 55%), ${color.coral}`,
-              transition: 'width 240ms ease',
-            }}
-          />
+          <div className="zone-fill" style={{ width: `${pct}%` }} />
         </div>
 
-        {/* Footer */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            marginTop: 14,
-            color: color.muted,
-            fontSize: 13,
-          }}
-        >
+        <div className="zone-foot">
           <span
+            className="zone-foot-dot"
             aria-hidden="true"
             style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              background:
-                risk === 'over' || risk === 'will-exceed' ? color.coral : color.marigold,
-              flex: '0 0 auto',
+              background: risk === 'over' || risk === 'will-exceed' ? color.coral : color.marigold,
             }}
           />
-          <span style={{ color: risk === 'over' ? color.coral : color.muted }}>
+          <span className="zone-foot-text">
             {remainingText} · {secondaryText}
           </span>
         </div>
+      </div>
+
+      <div className="zone-earth">
+        <img src={earthUrl} alt="" aria-hidden="true" />
       </div>
     </section>
   )

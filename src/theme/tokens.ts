@@ -26,6 +26,23 @@ export const color = {
   plum: '#6A5A92',
 } as const
 
+/**
+ * "Schengen Zone" card palette — the wide, earth-illustration hero.
+ * A separate, brighter world from the base tokens above (navy + blue glow,
+ * amber/lime/coral accents). See the Schengen Zone design study.
+ */
+export const zone = {
+  navyTop: '#1a2942',
+  navyBottom: '#111d31',
+  trackBg: '#0c1626',
+  blueGlow: '#3b82f6',
+  coral: '#f2765b',
+  amber: '#f2c94c',
+  lime: '#a4d65e',
+  mutedA: '#8ea0bd',
+  mutedB: '#9fb0cc',
+} as const
+
 export const radius = {
   card: '22px',
   chunky: '20px',
@@ -42,6 +59,7 @@ export const space = {
 
 export const type = {
   display: "'Baloo 2', 'Clash Display', 'Cabinet Grotesk', system-ui, sans-serif",
+  zoneDisplay: "'Manrope', 'Inter', system-ui, sans-serif",
   body: "'Inter', 'DM Sans', system-ui, sans-serif",
   bigCount: '54px',
   heading: '17px',
@@ -56,5 +74,5 @@ export const motion = {
   spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
 } as const
 
-export const theme = { color, radius, space, type, motion } as const
+export const theme = { color, zone, radius, space, type, motion } as const
 export type Theme = typeof theme

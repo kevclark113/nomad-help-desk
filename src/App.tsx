@@ -32,7 +32,7 @@ export default function App() {
     <div
       style={{
         width: '100%',
-        maxWidth: 460,
+        maxWidth: 760,
         display: 'flex',
         flexDirection: 'column',
         gap: 16,
@@ -43,15 +43,24 @@ export default function App() {
           Nomad Help Desk
         </p>
         <h1 style={{ fontFamily: type.display, fontSize: 22, margin: '2px 0 0', fontWeight: 700 }}>
-          Schengen tracker
+          Schengen Tracker
         </h1>
       </header>
 
       <StatusCard status={status} asOf={today} />
 
+      {/* Forms span the full card width. */}
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 16,
+        }}
+      >
       <Panel>
-        <h2 style={{ fontSize: 14, margin: '0 0 12px', color: color.paper }}>
-          {editing ? 'Edit trip' : 'Add a trip'}
+        <h2 className="panel-heading" style={{ fontSize: 20, margin: '0 0 12px', color: color.paper }}>
+          {editing ? 'Edit Trip' : 'Add a Trip'}
         </h2>
         <TripEditor
           editing={editing}
@@ -61,7 +70,7 @@ export default function App() {
       </Panel>
 
       <Panel>
-        <h2 style={{ fontSize: 14, margin: '0 0 12px', color: color.paper }}>Your trips</h2>
+        <h2 className="panel-heading" style={{ fontSize: 20, margin: '0 0 12px', color: color.paper }}>Your Trips</h2>
         <TripsList
           trips={trips}
           violationDate={status.projectedViolationDate}
@@ -74,16 +83,17 @@ export default function App() {
       </Panel>
 
       <Panel>
-        <h2 style={{ fontSize: 14, margin: '0 0 12px', color: color.paper }}>Plan a trip</h2>
+        <h2 className="panel-heading" style={{ fontSize: 20, margin: '0 0 12px', color: color.paper }}>Plan a Trip</h2>
         <PlanTrip trips={trips} />
       </Panel>
 
       {firebaseEnabled && (
         <Panel>
-          <h2 style={{ fontSize: 14, margin: '0 0 12px', color: color.paper }}>Account</h2>
+          <h2 className="panel-heading" style={{ fontSize: 20, margin: '0 0 12px', color: color.paper }}>Account</h2>
           <AccountPanel />
         </Panel>
       )}
+      </div>
     </div>
   )
 }

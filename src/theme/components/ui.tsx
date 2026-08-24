@@ -8,7 +8,8 @@ export function Panel({ children, style }: { children: ReactNode; style?: React.
       style={{
         borderRadius: radius.chunky,
         padding: 18,
-        background: 'rgba(255,255,255,0.035)',
+        // Match the top status card's navy gradient (index.css .zone-card).
+        background: 'linear-gradient(150deg, #1a2942 0%, #111d31 100%)',
         border: '1px solid rgba(255,255,255,0.06)',
         ...style,
       }}
@@ -19,12 +20,27 @@ export function Panel({ children, style }: { children: ReactNode; style?: React.
 }
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'solid' | 'ghost' | 'danger'
+  variant?: 'solid' | 'ghost' | 'danger' | 'chip' | 'chipTeal'
 }
 
 export function Button({ variant = 'solid', style, ...rest }: ButtonProps) {
+  // Shared "puffy pill" treatment matching the Zone card's status chip
+  // (e.g. "on track") — layered gradient, soft top highlight, black ink.
+  const chipBase: React.CSSProperties = {
+    color: '#000000',
+    border: '1px solid transparent',
+    fontWeight: 800,
+    fontSize: 14,
+    padding: '9px 18px',
+    boxShadow:
+      '0 4px 10px rgba(0,0,0,0.35), inset 0 1.5px 0 rgba(255,255,255,0.6), inset 0 -2px 3px rgba(0,0,0,0.18)',
+  }
   const variants: Record<NonNullable<ButtonProps['variant']>, React.CSSProperties> = {
     solid: { background: color.cobalt, color: color.paper, border: '1px solid transparent' },
+    // Hot pink echoing the earth graphic's magenta bubbles.
+    chip: { ...chipBase, background: 'linear-gradient(180deg, #ff86d1, #ff29ab)' },
+    // Turquoise echoing the earth graphic's teal bubbles.
+    chipTeal: { ...chipBase, background: 'linear-gradient(180deg, #6cd8de, #48aeb4)' },
     ghost: {
       background: 'transparent',
       color: color.muted,

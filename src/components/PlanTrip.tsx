@@ -47,7 +47,7 @@ export function PlanTrip({ trips }: { trips: Trip[] }) {
 
       {!valid && (
         <p style={{ color: color.muted, fontSize: 13, margin: 0 }}>
-          Enter both dates to check a planned stay.
+          Enter desired dates to check your stay.
         </p>
       )}
 

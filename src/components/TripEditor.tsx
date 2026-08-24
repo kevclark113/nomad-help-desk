@@ -76,8 +76,8 @@ export function TripEditor({
       {error && <span style={{ color: color.coral, fontSize: 12 }}>{error}</span>}
 
       <div style={{ display: 'flex', gap: 8 }}>
-        <Button onClick={submit} disabled={!canSave} style={{ opacity: canSave ? 1 : 0.5 }}>
-          {editing ? 'Save changes' : 'Add trip'}
+        <Button variant="chip" onClick={submit} disabled={!canSave} style={{ opacity: canSave ? 1 : 0.5 }}>
+          {editing ? 'Save changes' : 'Add Trip'}
         </Button>
         {editing && onCancel && (
           <Button variant="ghost" onClick={onCancel}>
@@ -86,7 +86,7 @@ export function TripEditor({
         )}
         {!editing && (
           <Button
-            variant="ghost"
+            variant="chipTeal"
             onClick={() => {
               setEntryDate(todayISO())
               setExitDate(todayISO())
