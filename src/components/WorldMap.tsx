@@ -156,12 +156,12 @@ export default function WorldMap({ visited, upcoming, bucket, stats, onToggle }:
           <pattern
             id="hatch-visited-upcoming"
             patternUnits="userSpaceOnUse"
-            width={8}
-            height={8}
+            width={4}
+            height={4}
             patternTransform="rotate(45)"
           >
-            <rect width={8} height={8} fill={mapColors.visited} />
-            <rect width={4} height={8} fill={mapColors.upcoming} />
+            <rect width={4} height={4} fill={mapColors.visited} />
+            <rect width={2} height={4} fill={mapColors.upcoming} />
           </pattern>
         </defs>
         <g transform={transform.toString()}>

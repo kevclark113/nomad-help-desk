@@ -95,7 +95,7 @@ export function MapView() {
         <LegendSwatch fill={mapColors.visited} label="Visited" />
         <LegendSwatch fill={mapColors.upcoming} label="Upcoming trip" />
         <LegendSwatch
-          fill={`repeating-linear-gradient(45deg, ${mapColors.visited} 0 4px, ${mapColors.upcoming} 4px 8px)`}
+          fill={`repeating-linear-gradient(45deg, ${mapColors.visited} 0 3px, ${mapColors.upcoming} 3px 6px)`}
           label="Visited + upcoming"
         />
         <LegendSwatch fill={mapColors.bucket} label="Bucket list" />
