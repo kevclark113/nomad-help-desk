@@ -35,20 +35,23 @@ export function visitedCodes(trips: readonly Trip[], manual: Iterable<string>): 
 }
 
 export interface CountryClassification {
-  /** Been there: a past/ongoing trip, or manually marked visited. */
+  /** Been there: a past/ongoing trip, or a manual 'visited' mark. May also be in `upcoming`. */
   visited: Set<string>
-  /** Only a future trip on record (and not already visited). */
+  /** Has a future trip on record. May also be in `visited` (been there + going again). */
   upcoming: Set<string>
-  /** Want to go: manually marked bucket-list (and not visited/upcoming). */
+  /** Want to go: manual 'bucket' mark, and not already visited or upcoming. */
   bucket: Set<string>
 }
 
 /**
- * Classify visited-map countries as of `today`, with precedence
- * visited > upcoming > bucket:
+ * Classify visited-map countries as of `today`:
  * - visited: a trip with entry date today-or-earlier, or a manual 'visited' mark
- * - upcoming: only a future trip on record
- * - bucket: a manual 'bucket' mark
+ * - upcoming: a future trip on record
+ * - bucket: a manual 'bucket' mark (only when not visited/upcoming)
+ *
+ * `visited` and `upcoming` intentionally OVERLAP — a country you've been to and
+ * have a future trip back to is in both (the map renders it as a hybrid). Bucket
+ * is exclusive (it means "want to go", i.e. not yet visited and no trip booked).
  *
  * `marks` maps alpha-2 code → manual status.
  */
@@ -73,11 +76,8 @@ export function classifyCountries(
     else upcoming.add(code)
   }
 
-  // Enforce precedence: visited > upcoming > bucket.
-  for (const c of visited) {
-    upcoming.delete(c)
-    bucket.delete(c)
-  }
+  // Bucket only applies when a country isn't already visited or upcoming.
+  for (const c of visited) bucket.delete(c)
   for (const c of upcoming) bucket.delete(c)
 
   return { visited, upcoming, bucket }

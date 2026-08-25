@@ -94,6 +94,10 @@ export function MapView() {
       <div style={{ display: 'flex', gap: 16, padding: '0 4px', flexWrap: 'wrap' }}>
         <LegendSwatch fill={mapColors.visited} label="Visited" />
         <LegendSwatch fill={mapColors.upcoming} label="Upcoming trip" />
+        <LegendSwatch
+          fill={`repeating-linear-gradient(45deg, ${mapColors.visited} 0 4px, ${mapColors.upcoming} 4px 8px)`}
+          label="Visited + upcoming"
+        />
         <LegendSwatch fill={mapColors.bucket} label="Bucket list" />
         <LegendSwatch fill={mapColors.land} label="Not visited" />
       </div>
