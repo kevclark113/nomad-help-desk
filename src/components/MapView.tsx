@@ -33,7 +33,7 @@ export function MapView() {
         </h2>
         <p style={{ margin: '2px 0 0', color: color.muted, fontSize: 14 }}>
           {visited.size} {visited.size === 1 ? 'country' : 'countries'} so far
-          {upcoming.size > 0 ? ` · ${upcoming.size} upcoming` : ''} · tap a country to toggle it
+          {upcoming.size > 0 ? ` · ${upcoming.size} upcoming` : ''} · scroll to zoom, tap a country to toggle
         </p>
       </div>
 
