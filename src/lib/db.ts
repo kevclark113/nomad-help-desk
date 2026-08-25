@@ -19,9 +19,12 @@ class NomadDB extends Dexie {
   constructor() {
     super('nomad-help-desk')
     this.version(1).stores({ trips: '++id, entryDate' })
-    this.version(2)
-      .stores({ trips: 'id, entryDate' })
-      .upgrade((tx) => tx.table('trips').clear())
+    // IndexedDB can't change a store's primary key in place (Dexie throws
+    // "changing primary key"), so the ++id -> string-id switch DROPS the old
+    // store in v2 and RECREATES it in v3. v1-era local trips (disposable
+    // pre-launch test data) are cleared by the drop; users already on v2/v3
+    // keep their data since they don't re-run these older upgrade steps.
+    this.version(2).stores({ trips: null })
     this.version(3).stores({ trips: 'id, entryDate', visited: 'code' })
   }
 }
