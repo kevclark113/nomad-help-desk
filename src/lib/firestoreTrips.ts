@@ -15,6 +15,7 @@ function toTrip(id: string, data: Record<string, unknown>): Trip {
     entryDate: String(data.entryDate),
     exitDate: String(data.exitDate),
     note: data.note != null ? String(data.note) : undefined,
+    countryCode: data.countryCode != null ? String(data.countryCode) : undefined,
   }
 }
 
