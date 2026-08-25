@@ -114,6 +114,7 @@ export function SelectField({
     <label style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 0, ...style }}>
       <span style={{ fontSize: 12, color: color.muted, fontWeight: 600 }}>{label}</span>
       <select
+        className="ui-select"
         style={{
           font: 'inherit',
           fontSize: 14,

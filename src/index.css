@@ -41,6 +41,13 @@ body {
   text-shadow: 0 4px 16px rgba(59, 130, 246, 0.55), 0 1px 6px rgba(59, 130, 246, 0.4);
 }
 
+/* Dropdown options: match the app's navy instead of the browser's default gray,
+   with light text. (Chromium honors option background/color in the popup.) */
+.ui-select option {
+  background-color: #1a2942;
+  color: #f6f0e4;
+}
+
 .zone-card {
   position: relative;
   width: 100%;
