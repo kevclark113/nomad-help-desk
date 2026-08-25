@@ -9,23 +9,34 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "icons": "node scripts/gen-icons.mjs"
+    "icons": "node scripts/gen-icons.mjs",
+    "iso": "node scripts/gen-iso.mjs"
   },
   "dependencies": {
+    "d3-geo": "^3.1.1",
+    "d3-selection": "^3.0.0",
+    "d3-zoom": "^3.0.0",
     "dexie": "^4.0.10",
     "dexie-react-hooks": "^4.4.0",
     "firebase": "^12.18.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
   },
   "devDependencies": {
+    "@types/d3-geo": "^3.1.1",
+    "@types/d3-selection": "^3.0.11",
+    "@types/d3-zoom": "^3.0.8",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@types/topojson-client": "^3.1.5",
     "@vitejs/plugin-react": "^4.3.4",
     "sharp": "^0.35.3",
     "typescript": "^5.6.3",
     "vite": "^5.4.11",
     "vite-plugin-pwa": "^0.21.1",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "world-countries": "^5.1.0"
   }
 }

@@ -27,8 +27,12 @@ export type NewTrip = Omit<Trip, 'id'>
 /** The minimal shape the 90/180 engine needs. */
 export type TripDates = Pick<Trip, 'entryDate' | 'exitDate'>
 
-/** A country the user marked visited directly (e.g. by tapping the map). */
-export interface VisitedCountry {
+/** How a country was marked directly on the map. */
+export type MarkStatus = 'visited' | 'bucket'
+
+/** A country the user marked directly (tapping the map): visited or bucket-list. */
+export interface CountryMark {
   code: string // ISO 3166-1 alpha-2, uppercase
+  status: MarkStatus
   addedAt?: ISODate
 }

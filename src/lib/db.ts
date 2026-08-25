@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { Trip, NewTrip, VisitedCountry } from './types'
+import type { Trip, NewTrip, CountryMark, MarkStatus } from './types'
 import { isValidISODate, daysBetween, todayISO } from './dateUtils'
 
 /**
@@ -14,7 +14,7 @@ import { isValidISODate, daysBetween, todayISO } from './dateUtils'
  */
 class NomadDB extends Dexie {
   trips!: Table<Trip, string>
-  visited!: Table<VisitedCountry, string>
+  visited!: Table<CountryMark, string>
 
   constructor() {
     super('nomad-help-desk')
@@ -71,16 +71,18 @@ export async function deleteTrip(id: string): Promise<void> {
   await db.trips.delete(id)
 }
 
-// --- Visited countries (manual toggles) ---
+// --- Country marks (manual visited / bucket-list toggles) ---
 
-export async function getVisited(): Promise<VisitedCountry[]> {
-  return db.visited.toArray()
+export async function getMarks(): Promise<CountryMark[]> {
+  const rows = await db.visited.toArray()
+  // Rows written before statuses existed default to 'visited'.
+  return rows.map((r) => ({ ...r, status: r.status ?? 'visited' }))
 }
 
-export async function addVisited(code: string): Promise<void> {
-  await db.visited.put({ code: code.toUpperCase(), addedAt: todayISO() })
+export async function setMark(code: string, status: MarkStatus): Promise<void> {
+  await db.visited.put({ code: code.toUpperCase(), status, addedAt: todayISO() })
 }
 
-export async function removeVisited(code: string): Promise<void> {
+export async function clearMark(code: string): Promise<void> {
   await db.visited.delete(code.toUpperCase())
 }
