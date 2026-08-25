@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { visitedCodes, countryStats, normalizeCode } from './visited'
+import { visitedCodes, countryStats, normalizeCode, classifyCountries } from './visited'
 import type { Trip } from './types'
 
 const trip = (id: string, entryDate: string, exitDate: string, countryCode?: string): Trip => ({
@@ -64,5 +64,30 @@ describe('countryStats', () => {
     const stats = countryStats(trips)
     expect(stats.size).toBe(1)
     expect(stats.get('PT')?.trips).toBe(2)
+  })
+})
+
+describe('classifyCountries', () => {
+  const today = '2026-08-25'
+
+  it('splits past/ongoing trips (visited) from future trips (upcoming)', () => {
+    const trips = [
+      trip('1', '2026-03-01', '2026-03-10', 'PT'), // past → visited
+      trip('2', '2026-08-25', '2026-09-01', 'ES'), // starts today → visited
+      trip('3', '2026-12-01', '2026-12-10', 'GR'), // future → upcoming
+    ]
+    const { visited, upcoming } = classifyCountries(trips, [], today)
+    expect(visited).toEqual(new Set(['PT', 'ES']))
+    expect(upcoming).toEqual(new Set(['GR']))
+  })
+
+  it('manual toggles are visited, and visited wins over upcoming', () => {
+    const trips = [
+      trip('1', '2026-12-01', '2026-12-10', 'GR'), // future GR
+      trip('2', '2026-01-01', '2026-01-05', 'GR'), // but also a past GR trip
+    ]
+    const { visited, upcoming } = classifyCountries(trips, ['th'], today)
+    expect(visited).toEqual(new Set(['GR', 'TH']))
+    expect(upcoming).toEqual(new Set()) // GR removed from upcoming since it's visited
   })
 })

@@ -50,7 +50,8 @@ export const zone = {
 export const map = {
   land: '#22344d', // unvisited land — a muted tone on the dark ground
   landStroke: '#0e1a2b', // country borders
-  visited: '#f2c94c', // visited fill (amber, echoing the Zone card)
+  visited: '#f2c94c', // been there (amber, echoing the Zone card)
+  upcoming: '#35b0bc', // a future trip on record (teal — distinct from visited)
 } as const
 
 export const radius = {

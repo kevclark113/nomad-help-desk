@@ -70,7 +70,9 @@ export default function App() {
     <div
       style={{
         width: '100%',
-        maxWidth: 760,
+        // The map wants more room (easier to see + click smaller countries);
+        // the tracker stays a comfortable reading width.
+        maxWidth: view === 'map' ? 1040 : 760,
         display: 'flex',
         flexDirection: 'column',
         gap: 16,

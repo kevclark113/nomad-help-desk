@@ -34,6 +34,37 @@ export function visitedCodes(trips: readonly Trip[], manual: Iterable<string>): 
   return set
 }
 
+export interface CountryClassification {
+  /** Been there: a past/ongoing trip, or manually marked. */
+  visited: Set<string>
+  /** Only a future trip on record (and not already visited). */
+  upcoming: Set<string>
+}
+
+/**
+ * Split visited-map countries into "visited" vs "upcoming" as of `today`.
+ * A trip whose entry date is today or earlier counts as visited; a purely
+ * future trip is upcoming. Manual toggles are always visited. Visited wins
+ * when a country is both.
+ */
+export function classifyCountries(
+  trips: readonly Trip[],
+  manual: Iterable<string>,
+  today: ISODate,
+): CountryClassification {
+  const visited = new Set<string>()
+  const upcoming = new Set<string>()
+  for (const c of manual) if (c) visited.add(normalizeCode(c))
+  for (const t of trips) {
+    if (!t.countryCode) continue
+    const code = normalizeCode(t.countryCode)
+    if (t.entryDate <= today) visited.add(code)
+    else upcoming.add(code)
+  }
+  for (const c of visited) upcoming.delete(c)
+  return { visited, upcoming }
+}
+
 /** Aggregate trips (only those with a country) by country code. */
 export function countryStats(trips: readonly Trip[]): Map<string, CountryStat> {
   const byCode = new Map<string, CountryStat>()
