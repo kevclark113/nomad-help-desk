@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { Trip } from '../lib/types'
 import { isValidISODate, daysBetween, todayISO } from '../lib/dateUtils'
+import { SCHENGEN_COUNTRIES } from '../lib/schengenCountries'
 import { color } from '../theme/tokens'
-import { Button, Field } from '../theme/components/ui'
+import { Button, Field, SelectField } from '../theme/components/ui'
 
 /**
  * Add/edit form for a single trip. Native date inputs give us `YYYY-MM-DD`
@@ -20,11 +21,13 @@ export function TripEditor({
   const [entryDate, setEntryDate] = useState('')
   const [exitDate, setExitDate] = useState('')
   const [note, setNote] = useState('')
+  const [countryCode, setCountryCode] = useState('')
 
   useEffect(() => {
     setEntryDate(editing?.entryDate ?? '')
     setExitDate(editing?.exitDate ?? '')
     setNote(editing?.note ?? '')
+    setCountryCode(editing?.countryCode ?? '')
   }, [editing])
 
   const validDates = isValidISODate(entryDate) && isValidISODate(exitDate)
@@ -36,11 +39,17 @@ export function TripEditor({
 
   function submit() {
     if (!canSave) return
-    onSubmit({ entryDate, exitDate, note: note.trim() || undefined })
+    onSubmit({
+      entryDate,
+      exitDate,
+      note: note.trim() || undefined,
+      countryCode: countryCode || undefined,
+    })
     if (!editing) {
       setEntryDate('')
       setExitDate('')
       setNote('')
+      setCountryCode('')
     }
   }
 
@@ -64,6 +73,18 @@ export function TripEditor({
           style={{ flex: '1 1 140px' }}
         />
       </div>
+      <SelectField
+        label="Country (optional)"
+        value={countryCode}
+        onChange={(e) => setCountryCode(e.target.value)}
+      >
+        <option value="">— Select a Schengen country —</option>
+        {SCHENGEN_COUNTRIES.map((c) => (
+          <option key={c.code} value={c.code}>
+            {c.name}
+          </option>
+        ))}
+      </SelectField>
       <Field
         label="Note (optional)"
         type="text"
