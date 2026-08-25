@@ -1,4 +1,9 @@
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react'
+import type {
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+} from 'react'
 import { color, radius } from '../tokens'
 
 /** A dark rounded surface for grouping content below the status card. */
@@ -94,6 +99,37 @@ export function Field({
         }}
         {...rest}
       />
+    </label>
+  )
+}
+
+/** Labeled dropdown, styled to match Field. Pass <option>s as children. */
+export function SelectField({
+  label,
+  style,
+  children,
+  ...rest
+}: { label: string } & SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 0, ...style }}>
+      <span style={{ fontSize: 12, color: color.muted, fontWeight: 600 }}>{label}</span>
+      <select
+        className="ui-select"
+        style={{
+          font: 'inherit',
+          fontSize: 14,
+          width: '100%',
+          color: color.paper,
+          background: 'rgba(0,0,0,0.25)',
+          border: '1px solid rgba(255,255,255,0.12)',
+          borderRadius: 12,
+          padding: '9px 11px',
+          colorScheme: 'dark',
+        }}
+        {...rest}
+      >
+        {children}
+      </select>
     </label>
   )
 }

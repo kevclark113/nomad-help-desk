@@ -1,5 +1,6 @@
 import type { Trip } from '../lib/types'
 import { formatHuman, inclusiveDays, daysBetween, type ISODate } from '../lib/dateUtils'
+import { schengenName } from '../lib/schengenCountries'
 import { color } from '../theme/tokens'
 import { Button } from '../theme/components/ui'
 
@@ -54,6 +55,7 @@ export function TripsList({
               </div>
               <div style={{ color: color.muted, fontSize: 12, marginTop: 2 }}>
                 {inclusiveDays(t.entryDate, t.exitDate)} days
+                {t.countryCode ? ` · ${schengenName(t.countryCode)}` : ''}
                 {t.note ? ` · ${t.note}` : ''}
               </div>
               {breaches && (
