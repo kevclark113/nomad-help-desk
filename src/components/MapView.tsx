@@ -1,10 +1,13 @@
 import { Suspense, lazy, useState } from 'react'
 import { useTripStore } from '../lib/useTripStore'
 import { useVisitedStore } from '../lib/useVisitedStore'
-import { classifyCountries } from '../lib/visited'
+import { classifyCountries, countryStats } from '../lib/visited'
 import { todayISO } from '../lib/dateUtils'
 import type { MarkStatus } from '../lib/types'
 import { color, map as mapColors, type } from '../theme/tokens'
+
+// UN members (193) + 2 observer states — the common "countries in the world" count.
+const TOTAL_COUNTRIES = 195
 
 // Lazy so the map libs + atlas only load when the Map tab is opened.
 const WorldMap = lazy(() => import('./WorldMap'))
@@ -25,7 +28,10 @@ export function MapView() {
   const { trips } = useTripStore()
   const { marks, toggleMark } = useVisitedStore()
   const { visited, upcoming, bucket } = classifyCountries(trips, marks, todayISO())
+  const stats = countryStats(trips)
   const [mode, setMode] = useState<MarkStatus>('visited')
+
+  const pct = Math.round((visited.size / TOTAL_COUNTRIES) * 100)
 
   const modeButton = (m: MarkStatus, label: string, activeColor: string) => {
     const active = mode === m
@@ -53,13 +59,28 @@ export function MapView() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ padding: '0 4px' }}>
-        <h2 style={{ fontFamily: type.display, fontSize: 20, margin: 0, color: color.paper }}>
+        <p style={{ margin: 0, color: color.muted, fontSize: 13, fontWeight: 600 }}>
           Countries visited
-        </h2>
-        <p style={{ margin: '2px 0 0', color: color.muted, fontSize: 14 }}>
-          {visited.size} visited
-          {upcoming.size > 0 ? ` · ${upcoming.size} upcoming` : ''}
-          {bucket.size > 0 ? ` · ${bucket.size} bucket list` : ''} · scroll to zoom
+        </p>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 2 }}>
+          <span
+            style={{
+              fontFamily: type.display,
+              fontSize: 40,
+              fontWeight: 800,
+              lineHeight: 1,
+              color: color.paper,
+            }}
+          >
+            {visited.size}
+          </span>
+          <span style={{ color: color.muted, fontSize: 15 }}>
+            / {TOTAL_COUNTRIES} · {pct}% of the world
+          </span>
+        </div>
+        <p style={{ margin: '4px 0 0', color: color.muted, fontSize: 13 }}>
+          {upcoming.size > 0 ? `${upcoming.size} upcoming · ` : ''}
+          {bucket.size > 0 ? `${bucket.size} bucket list · ` : ''}scroll to zoom, tap to mark
         </p>
       </div>
 
@@ -86,6 +107,7 @@ export function MapView() {
           visited={visited}
           upcoming={upcoming}
           bucket={bucket}
+          stats={stats}
           onToggle={(a2) => void toggleMark(a2, mode)}
         />
       </Suspense>

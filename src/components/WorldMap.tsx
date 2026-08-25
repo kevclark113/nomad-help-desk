@@ -6,7 +6,9 @@ import { zoom as d3zoom, zoomIdentity, type ZoomBehavior, type ZoomTransform } f
 import type { Topology, GeometryCollection } from 'topojson-specification'
 import type { Feature, FeatureCollection, Geometry } from 'geojson'
 import worldAtlas from 'world-atlas/countries-110m.json'
-import { numericToAlpha2 } from '../lib/isoCountries'
+import { numericToAlpha2, nameForAlpha2 } from '../lib/isoCountries'
+import { formatHuman } from '../lib/dateUtils'
+import type { CountryStat } from '../lib/visited'
 import { map as mapColors, color } from '../theme/tokens'
 
 /**
@@ -30,14 +32,23 @@ export interface WorldMapProps {
   visited: Set<string>
   upcoming: Set<string>
   bucket: Set<string>
+  stats?: Map<string, CountryStat>
   /** Called with the clicked country's alpha-2 code. */
   onToggle?: (alpha2: string) => void
 }
 
-export default function WorldMap({ visited, upcoming, bucket, onToggle }: WorldMapProps) {
+interface Tip {
+  a2: string
+  x: number
+  y: number
+}
+
+export default function WorldMap({ visited, upcoming, bucket, stats, onToggle }: WorldMapProps) {
   const svgRef = useRef<SVGSVGElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const zoomRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(null)
   const [transform, setTransform] = useState<ZoomTransform>(zoomIdentity)
+  const [tip, setTip] = useState<Tip | null>(null)
 
   const shapes = useMemo(() => {
     const projection = geoNaturalEarth1().fitSize([WIDTH, HEIGHT], countries)
@@ -84,6 +95,35 @@ export default function WorldMap({ visited, upcoming, bucket, onToggle }: WorldM
     }
   }
 
+  const showTip = (e: React.MouseEvent, a2?: string) => {
+    if (!a2) return
+    const rect = containerRef.current?.getBoundingClientRect()
+    setTip({ a2, x: e.clientX - (rect?.left ?? 0), y: e.clientY - (rect?.top ?? 0) })
+  }
+
+  const tipLabel = (a2: string): { name: string; detail: string } => {
+    const name = nameForAlpha2(a2) ?? a2
+    const stat = stats?.get(a2)
+    if (stat) {
+      const range =
+        stat.firstEntry === stat.lastExit
+          ? formatHuman(stat.firstEntry)
+          : `${formatHuman(stat.firstEntry)} – ${formatHuman(stat.lastExit)}`
+      return {
+        name,
+        detail: `${stat.days} ${stat.days === 1 ? 'day' : 'days'} · ${stat.trips} ${stat.trips === 1 ? 'trip' : 'trips'} · ${range}`,
+      }
+    }
+    const status = visited.has(a2)
+      ? 'Visited'
+      : upcoming.has(a2)
+        ? 'Upcoming trip'
+        : bucket.has(a2)
+          ? 'Bucket list'
+          : 'Not visited'
+    return { name, detail: status }
+  }
+
   const fillFor = (state: string) =>
     state === 'visited'
       ? mapColors.visited
@@ -107,7 +147,7 @@ export default function WorldMap({ visited, upcoming, bucket, onToggle }: WorldM
   }
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div ref={containerRef} style={{ position: 'relative' }} onMouseLeave={() => setTip(null)}>
       <svg
         ref={svgRef}
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -126,14 +166,38 @@ export default function WorldMap({ visited, upcoming, bucket, onToggle }: WorldM
               strokeWidth={0.4}
               strokeLinejoin="round"
               vectorEffect="non-scaling-stroke"
+              data-a2={s.a2}
               style={{ cursor: s.a2 && onToggle ? 'pointer' : 'default' }}
               onClick={s.a2 && onToggle ? () => onToggle(s.a2!) : undefined}
-            >
-              {s.a2 && <title>{s.a2}</title>}
-            </path>
+              onMouseMove={s.a2 ? (e) => showTip(e, s.a2) : undefined}
+            />
           ))}
         </g>
       </svg>
+
+      {tip &&
+        (() => {
+          const { name, detail } = tipLabel(tip.a2)
+          return (
+            <div
+              style={{
+                position: 'absolute',
+                left: tip.x + 14,
+                top: tip.y + 14,
+                pointerEvents: 'none',
+                background: 'rgba(10,20,35,0.95)',
+                border: '1px solid rgba(255,255,255,0.14)',
+                borderRadius: 8,
+                padding: '6px 10px',
+                maxWidth: 240,
+                zIndex: 5,
+              }}
+            >
+              <div style={{ color: color.paper, fontSize: 13, fontWeight: 700 }}>{name}</div>
+              <div style={{ color: color.muted, fontSize: 12, marginTop: 1 }}>{detail}</div>
+            </div>
+          )
+        })()}
 
       {/* Zoom controls */}
       <div
