@@ -1,8 +1,9 @@
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useState } from 'react'
 import { useTripStore } from '../lib/useTripStore'
 import { useVisitedStore } from '../lib/useVisitedStore'
 import { classifyCountries } from '../lib/visited'
 import { todayISO } from '../lib/dateUtils'
+import type { MarkStatus } from '../lib/types'
 import { color, map as mapColors, type } from '../theme/tokens'
 
 // Lazy so the map libs + atlas only load when the Map tab is opened.
@@ -22,8 +23,32 @@ function LegendSwatch({ fill, label }: { fill: string; label: string }) {
 
 export function MapView() {
   const { trips } = useTripStore()
-  const { codes, toggleVisited } = useVisitedStore()
-  const { visited, upcoming } = classifyCountries(trips, codes, todayISO())
+  const { marks, toggleMark } = useVisitedStore()
+  const { visited, upcoming, bucket } = classifyCountries(trips, marks, todayISO())
+  const [mode, setMode] = useState<MarkStatus>('visited')
+
+  const modeButton = (m: MarkStatus, label: string, activeColor: string) => {
+    const active = mode === m
+    return (
+      <button
+        onClick={() => setMode(m)}
+        aria-pressed={active}
+        style={{
+          font: 'inherit',
+          fontSize: 13,
+          fontWeight: 700,
+          padding: '7px 14px',
+          borderRadius: 999,
+          cursor: 'pointer',
+          border: `1px solid ${active ? activeColor : 'rgba(255,255,255,0.14)'}`,
+          background: active ? activeColor : 'transparent',
+          color: active ? '#10203a' : color.muted,
+        }}
+      >
+        {label}
+      </button>
+    )
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -32,14 +57,23 @@ export function MapView() {
           Countries visited
         </h2>
         <p style={{ margin: '2px 0 0', color: color.muted, fontSize: 14 }}>
-          {visited.size} {visited.size === 1 ? 'country' : 'countries'} so far
-          {upcoming.size > 0 ? ` · ${upcoming.size} upcoming` : ''} · scroll to zoom, tap a country to toggle
+          {visited.size} visited
+          {upcoming.size > 0 ? ` · ${upcoming.size} upcoming` : ''}
+          {bucket.size > 0 ? ` · ${bucket.size} bucket list` : ''} · scroll to zoom
         </p>
       </div>
 
-      <div style={{ display: 'flex', gap: 18, padding: '0 4px', flexWrap: 'wrap' }}>
+      {/* Marking mode: what a country click applies. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 4px', flexWrap: 'wrap' }}>
+        <span style={{ color: color.muted, fontSize: 13, fontWeight: 600 }}>Tap to mark:</span>
+        {modeButton('visited', 'Visited', mapColors.visited)}
+        {modeButton('bucket', 'Bucket list', mapColors.bucket)}
+      </div>
+
+      <div style={{ display: 'flex', gap: 16, padding: '0 4px', flexWrap: 'wrap' }}>
         <LegendSwatch fill={mapColors.visited} label="Visited" />
         <LegendSwatch fill={mapColors.upcoming} label="Upcoming trip" />
+        <LegendSwatch fill={mapColors.bucket} label="Bucket list" />
         <LegendSwatch fill={mapColors.land} label="Not visited" />
       </div>
 
@@ -48,7 +82,12 @@ export function MapView() {
           <p style={{ color: color.muted, fontSize: 14, padding: '24px 4px' }}>Loading map…</p>
         }
       >
-        <WorldMap visited={visited} upcoming={upcoming} onToggle={(a2) => void toggleVisited(a2)} />
+        <WorldMap
+          visited={visited}
+          upcoming={upcoming}
+          bucket={bucket}
+          onToggle={(a2) => void toggleMark(a2, mode)}
+        />
       </Suspense>
     </div>
   )

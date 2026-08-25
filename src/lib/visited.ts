@@ -5,7 +5,7 @@
  * Codes are ISO 3166-1 alpha-2, normalized to uppercase. Dates are `YYYY-MM-DD`
  * strings, which sort chronologically as plain strings.
  */
-import type { Trip } from './types'
+import type { Trip, MarkStatus } from './types'
 import { inclusiveDays, type ISODate } from './dateUtils'
 
 export interface CountryStat {
@@ -35,34 +35,52 @@ export function visitedCodes(trips: readonly Trip[], manual: Iterable<string>): 
 }
 
 export interface CountryClassification {
-  /** Been there: a past/ongoing trip, or manually marked. */
+  /** Been there: a past/ongoing trip, or manually marked visited. */
   visited: Set<string>
   /** Only a future trip on record (and not already visited). */
   upcoming: Set<string>
+  /** Want to go: manually marked bucket-list (and not visited/upcoming). */
+  bucket: Set<string>
 }
 
 /**
- * Split visited-map countries into "visited" vs "upcoming" as of `today`.
- * A trip whose entry date is today or earlier counts as visited; a purely
- * future trip is upcoming. Manual toggles are always visited. Visited wins
- * when a country is both.
+ * Classify visited-map countries as of `today`, with precedence
+ * visited > upcoming > bucket:
+ * - visited: a trip with entry date today-or-earlier, or a manual 'visited' mark
+ * - upcoming: only a future trip on record
+ * - bucket: a manual 'bucket' mark
+ *
+ * `marks` maps alpha-2 code → manual status.
  */
 export function classifyCountries(
   trips: readonly Trip[],
-  manual: Iterable<string>,
+  marks: ReadonlyMap<string, MarkStatus>,
   today: ISODate,
 ): CountryClassification {
   const visited = new Set<string>()
   const upcoming = new Set<string>()
-  for (const c of manual) if (c) visited.add(normalizeCode(c))
+  const bucket = new Set<string>()
+
+  for (const [code, status] of marks) {
+    const c = normalizeCode(code)
+    if (status === 'visited') visited.add(c)
+    else if (status === 'bucket') bucket.add(c)
+  }
   for (const t of trips) {
     if (!t.countryCode) continue
     const code = normalizeCode(t.countryCode)
     if (t.entryDate <= today) visited.add(code)
     else upcoming.add(code)
   }
-  for (const c of visited) upcoming.delete(c)
-  return { visited, upcoming }
+
+  // Enforce precedence: visited > upcoming > bucket.
+  for (const c of visited) {
+    upcoming.delete(c)
+    bucket.delete(c)
+  }
+  for (const c of upcoming) bucket.delete(c)
+
+  return { visited, upcoming, bucket }
 }
 
 /** Aggregate trips (only those with a country) by country code. */

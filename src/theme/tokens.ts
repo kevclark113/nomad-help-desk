@@ -52,6 +52,7 @@ export const map = {
   landStroke: '#0e1a2b', // country borders
   visited: '#f2c94c', // been there (amber, echoing the Zone card)
   upcoming: '#35b0bc', // a future trip on record (teal — distinct from visited)
+  bucket: '#da6ea6', // want to go / bucket list (rose)
 } as const
 
 export const radius = {

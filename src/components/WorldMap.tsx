@@ -29,11 +29,12 @@ const countries = feature(
 export interface WorldMapProps {
   visited: Set<string>
   upcoming: Set<string>
-  /** Called with the clicked country's alpha-2 code to toggle it visited. */
+  bucket: Set<string>
+  /** Called with the clicked country's alpha-2 code. */
   onToggle?: (alpha2: string) => void
 }
 
-export default function WorldMap({ visited, upcoming, onToggle }: WorldMapProps) {
+export default function WorldMap({ visited, upcoming, bucket, onToggle }: WorldMapProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const zoomRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(null)
   const [transform, setTransform] = useState<ZoomTransform>(zoomIdentity)
@@ -43,10 +44,17 @@ export default function WorldMap({ visited, upcoming, onToggle }: WorldMapProps)
     const path = geoPath(projection)
     return countries.features.map((f: Feature<Geometry>, i) => {
       const a2 = f.id != null ? numericToAlpha2(String(f.id)) : undefined
-      const state = a2 && visited.has(a2) ? 'visited' : a2 && upcoming.has(a2) ? 'upcoming' : 'none'
+      const state =
+        a2 && visited.has(a2)
+          ? 'visited'
+          : a2 && upcoming.has(a2)
+            ? 'upcoming'
+            : a2 && bucket.has(a2)
+              ? 'bucket'
+              : 'none'
       return { key: String(f.id ?? i), d: path(f) ?? '', a2, state }
     })
-  }, [visited, upcoming])
+  }, [visited, upcoming, bucket])
 
   useEffect(() => {
     if (!svgRef.current) return
@@ -77,7 +85,13 @@ export default function WorldMap({ visited, upcoming, onToggle }: WorldMapProps)
   }
 
   const fillFor = (state: string) =>
-    state === 'visited' ? mapColors.visited : state === 'upcoming' ? mapColors.upcoming : mapColors.land
+    state === 'visited'
+      ? mapColors.visited
+      : state === 'upcoming'
+        ? mapColors.upcoming
+        : state === 'bucket'
+          ? mapColors.bucket
+          : mapColors.land
 
   const btnStyle: React.CSSProperties = {
     width: 34,

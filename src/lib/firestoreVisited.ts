@@ -1,18 +1,23 @@
 /**
- * Per-user "visited countries" storage in Firestore, at
- * `users/{uid}/visited/{code}` (one doc per alpha-2 code). Mirrors the local
- * Dexie `visited` store so manual map toggles sync across devices when signed in.
+ * Per-user country marks in Firestore, at `users/{uid}/visited/{code}` (one doc
+ * per alpha-2 code, carrying a status: 'visited' | 'bucket'). Mirrors the local
+ * Dexie `visited` store so manual map marks sync across devices when signed in.
  *
  * Firestore SDK access goes through dynamic imports (see firebase.ts) so the SDK
  * stays out of the main bundle until sign-in.
  */
 import { loadFirebase } from './firebase'
-import type { VisitedCountry } from './types'
+import type { CountryMark, MarkStatus } from './types'
 
-/** Live subscription to a user's visited countries. Returns an unsubscribe fn. */
-export function subscribeVisited(
+function toMark(code: string, data: Record<string, unknown>): CountryMark {
+  const status = data.status === 'bucket' ? 'bucket' : 'visited'
+  return { code, status, addedAt: data.addedAt as string | undefined }
+}
+
+/** Live subscription to a user's country marks. Returns an unsubscribe fn. */
+export function subscribeMarks(
   uid: string,
-  onData: (visited: VisitedCountry[]) => void,
+  onData: (marks: CountryMark[]) => void,
   onError?: (err: Error) => void,
 ): () => void {
   let unsub = () => {}
@@ -24,7 +29,7 @@ export function subscribeVisited(
       if (cancelled) return
       unsub = fs.onSnapshot(
         fs.collection(db, 'users', uid, 'visited'),
-        (snap) => onData(snap.docs.map((d) => ({ code: d.id, addedAt: d.data().addedAt }))),
+        (snap) => onData(snap.docs.map((d) => toMark(d.id, d.data()))),
         (err) => onError?.(err),
       )
     } catch (err) {
@@ -37,21 +42,28 @@ export function subscribeVisited(
   }
 }
 
-export async function getVisitedOnce(uid: string): Promise<VisitedCountry[]> {
+export async function getMarksOnce(uid: string): Promise<CountryMark[]> {
   const { db } = await loadFirebase()
   const fs = await import('firebase/firestore')
   const snap = await fs.getDocs(fs.collection(db, 'users', uid, 'visited'))
-  return snap.docs.map((d) => ({ code: d.id, addedAt: d.data().addedAt }))
+  return snap.docs.map((d) => toMark(d.id, d.data()))
 }
 
-export async function addVisited(uid: string, code: string, addedAt?: string): Promise<void> {
+export async function setMark(
+  uid: string,
+  code: string,
+  status: MarkStatus,
+  addedAt?: string,
+): Promise<void> {
   const { db } = await loadFirebase()
   const fs = await import('firebase/firestore')
-  const data: Record<string, unknown> = { addedAt: addedAt ?? fs.serverTimestamp() }
-  await fs.setDoc(fs.doc(fs.collection(db, 'users', uid, 'visited'), code.toUpperCase()), data)
+  await fs.setDoc(fs.doc(fs.collection(db, 'users', uid, 'visited'), code.toUpperCase()), {
+    status,
+    addedAt: addedAt ?? fs.serverTimestamp(),
+  })
 }
 
-export async function removeVisited(uid: string, code: string): Promise<void> {
+export async function clearMark(uid: string, code: string): Promise<void> {
   const { db } = await loadFirebase()
   const fs = await import('firebase/firestore')
   await fs.deleteDoc(fs.doc(fs.collection(db, 'users', uid, 'visited'), code.toUpperCase()))

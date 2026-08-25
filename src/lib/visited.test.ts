@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { visitedCodes, countryStats, normalizeCode, classifyCountries } from './visited'
-import type { Trip } from './types'
+import type { Trip, MarkStatus } from './types'
+
+const marks = (entries: Record<string, MarkStatus>): Map<string, MarkStatus> =>
+  new Map(Object.entries(entries))
 
 const trip = (id: string, entryDate: string, exitDate: string, countryCode?: string): Trip => ({
   id,
@@ -76,18 +79,31 @@ describe('classifyCountries', () => {
       trip('2', '2026-08-25', '2026-09-01', 'ES'), // starts today → visited
       trip('3', '2026-12-01', '2026-12-10', 'GR'), // future → upcoming
     ]
-    const { visited, upcoming } = classifyCountries(trips, [], today)
+    const { visited, upcoming, bucket } = classifyCountries(trips, marks({}), today)
     expect(visited).toEqual(new Set(['PT', 'ES']))
     expect(upcoming).toEqual(new Set(['GR']))
+    expect(bucket).toEqual(new Set())
   })
 
-  it('manual toggles are visited, and visited wins over upcoming', () => {
+  it('classifies manual visited and bucket marks', () => {
+    const { visited, bucket } = classifyCountries([], marks({ TH: 'visited', JP: 'bucket' }), today)
+    expect(visited).toEqual(new Set(['TH']))
+    expect(bucket).toEqual(new Set(['JP']))
+  })
+
+  it('enforces precedence visited > upcoming > bucket', () => {
     const trips = [
-      trip('1', '2026-12-01', '2026-12-10', 'GR'), // future GR
-      trip('2', '2026-01-01', '2026-01-05', 'GR'), // but also a past GR trip
+      trip('1', '2026-12-01', '2026-12-10', 'GR'), // future GR (upcoming)
+      trip('2', '2026-01-01', '2026-01-05', 'IT'), // past IT (visited)
     ]
-    const { visited, upcoming } = classifyCountries(trips, ['th'], today)
-    expect(visited).toEqual(new Set(['GR', 'TH']))
-    expect(upcoming).toEqual(new Set()) // GR removed from upcoming since it's visited
+    // IT also marked bucket (should stay visited); GR also marked bucket (stays upcoming)
+    const { visited, upcoming, bucket } = classifyCountries(
+      trips,
+      marks({ IT: 'bucket', GR: 'bucket', JP: 'bucket' }),
+      today,
+    )
+    expect(visited).toEqual(new Set(['IT']))
+    expect(upcoming).toEqual(new Set(['GR']))
+    expect(bucket).toEqual(new Set(['JP'])) // IT and GR removed by precedence
   })
 })
