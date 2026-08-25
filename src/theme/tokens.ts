@@ -43,6 +43,16 @@ export const zone = {
   mutedB: '#9fb0cc',
 } as const
 
+/**
+ * Visited-countries map palette. `visited` is the flat "been here" fill (Phase 2);
+ * a day-intensity scale will layer on later. Ocean is left to the page navy.
+ */
+export const map = {
+  land: '#22344d', // unvisited land — a muted tone on the dark ground
+  landStroke: '#0e1a2b', // country borders
+  visited: '#f2c94c', // visited fill (amber, echoing the Zone card)
+} as const
+
 export const radius = {
   card: '22px',
   chunky: '20px',
@@ -74,5 +84,5 @@ export const motion = {
   spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
 } as const
 
-export const theme = { color, zone, radius, space, type, motion } as const
+export const theme = { color, zone, map, radius, space, type, motion } as const
 export type Theme = typeof theme
