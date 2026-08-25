@@ -55,14 +55,10 @@ export default function WorldMap({ visited, upcoming, bucket, stats, onToggle }:
     const path = geoPath(projection)
     return countries.features.map((f: Feature<Geometry>, i) => {
       const a2 = f.id != null ? numericToAlpha2(String(f.id)) : undefined
-      const state =
-        a2 && visited.has(a2)
-          ? 'visited'
-          : a2 && upcoming.has(a2)
-            ? 'upcoming'
-            : a2 && bucket.has(a2)
-              ? 'bucket'
-              : 'none'
+      const isV = !!a2 && visited.has(a2)
+      const isU = !!a2 && upcoming.has(a2)
+      const isB = !!a2 && bucket.has(a2)
+      const state = isV && isU ? 'both' : isV ? 'visited' : isU ? 'upcoming' : isB ? 'bucket' : 'none'
       return { key: String(f.id ?? i), d: path(f) ?? '', a2, state }
     })
   }, [visited, upcoming, bucket])
@@ -104,34 +100,33 @@ export default function WorldMap({ visited, upcoming, bucket, stats, onToggle }:
   const tipLabel = (a2: string): { name: string; detail: string } => {
     const name = nameForAlpha2(a2) ?? a2
     const stat = stats?.get(a2)
+    const parts: string[] = []
     if (stat) {
       const range =
         stat.firstEntry === stat.lastExit
           ? formatHuman(stat.firstEntry)
           : `${formatHuman(stat.firstEntry)} – ${formatHuman(stat.lastExit)}`
-      return {
-        name,
-        detail: `${stat.days} ${stat.days === 1 ? 'day' : 'days'} · ${stat.trips} ${stat.trips === 1 ? 'trip' : 'trips'} · ${range}`,
-      }
+      parts.push(
+        `${stat.days} ${stat.days === 1 ? 'day' : 'days'} · ${stat.trips} ${stat.trips === 1 ? 'trip' : 'trips'} · ${range}`,
+      )
+    } else if (visited.has(a2)) {
+      parts.push('Visited')
     }
-    const status = visited.has(a2)
-      ? 'Visited'
-      : upcoming.has(a2)
-        ? 'Upcoming trip'
-        : bucket.has(a2)
-          ? 'Bucket list'
-          : 'Not visited'
-    return { name, detail: status }
+    if (upcoming.has(a2)) parts.push('Upcoming trip')
+    if (parts.length === 0) parts.push(bucket.has(a2) ? 'Bucket list' : 'Not visited')
+    return { name, detail: parts.join(' · ') }
   }
 
   const fillFor = (state: string) =>
-    state === 'visited'
-      ? mapColors.visited
-      : state === 'upcoming'
-        ? mapColors.upcoming
-        : state === 'bucket'
-          ? mapColors.bucket
-          : mapColors.land
+    state === 'both'
+      ? 'url(#hatch-visited-upcoming)'
+      : state === 'visited'
+        ? mapColors.visited
+        : state === 'upcoming'
+          ? mapColors.upcoming
+          : state === 'bucket'
+            ? mapColors.bucket
+            : mapColors.land
 
   const btnStyle: React.CSSProperties = {
     width: 34,
@@ -156,6 +151,19 @@ export default function WorldMap({ visited, upcoming, bucket, stats, onToggle }:
         aria-label="World map with visited countries highlighted"
         style={{ display: 'block', touchAction: 'none', cursor: 'grab' }}
       >
+        <defs>
+          {/* Visited + upcoming: diagonal amber/teal stripes. */}
+          <pattern
+            id="hatch-visited-upcoming"
+            patternUnits="userSpaceOnUse"
+            width={2}
+            height={2}
+            patternTransform="rotate(45)"
+          >
+            <rect width={2} height={2} fill={mapColors.visited} />
+            <rect width={1} height={2} fill={mapColors.upcoming} />
+          </pattern>
+        </defs>
         <g transform={transform.toString()}>
           {shapes.map((s) => (
             <path

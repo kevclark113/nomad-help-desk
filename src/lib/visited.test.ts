@@ -91,7 +91,18 @@ describe('classifyCountries', () => {
     expect(bucket).toEqual(new Set(['JP']))
   })
 
-  it('enforces precedence visited > upcoming > bucket', () => {
+  it('keeps a country in both visited and upcoming (been there + going again)', () => {
+    const trips = [
+      trip('1', '2026-01-01', '2026-01-10', 'PT'), // past
+      trip('2', '2026-12-01', '2026-12-10', 'PT'), // future
+    ]
+    const { visited, upcoming, bucket } = classifyCountries(trips, marks({}), today)
+    expect(visited.has('PT')).toBe(true)
+    expect(upcoming.has('PT')).toBe(true)
+    expect(bucket.has('PT')).toBe(false)
+  })
+
+  it('drops bucket when a country is visited or upcoming', () => {
     const trips = [
       trip('1', '2026-12-01', '2026-12-10', 'GR'), // future GR (upcoming)
       trip('2', '2026-01-01', '2026-01-05', 'IT'), // past IT (visited)
