@@ -3,26 +3,21 @@
  * trips. Reused by the manual /api/gmail/extract and (later) the scheduled scan.
  *
  * The Anthropic SDK is loaded via dynamic import() inside the function to keep
- * the serverless cold start light. Uses structured outputs (messages.parse) so
- * the model's response validates against the Zod schema.
+ * the serverless cold start light. We prompt for strict JSON and parse it
+ * defensively — no schema-validation dependency, so it works on any model.
  */
-import { z } from 'zod'
 import type { EmailContent } from './gmail.js'
 
-export const ProposedTripSchema = z.object({
-  sourceIndex: z.number().int(),
-  countryCode: z.string(),
-  countryName: z.string(),
-  entryDate: z.string(),
-  exitDate: z.string(),
-  confidence: z.enum(['high', 'medium', 'low']),
-  kind: z.enum(['flight', 'hotel', 'train', 'other']),
-  summary: z.string(),
-})
-
-export const ExtractionSchema = z.object({ trips: z.array(ProposedTripSchema) })
-
-export type ProposedTrip = z.infer<typeof ProposedTripSchema>
+export interface ProposedTrip {
+  sourceIndex: number
+  countryCode: string
+  countryName: string
+  entryDate: string
+  exitDate: string
+  confidence: 'high' | 'medium' | 'low'
+  kind: 'flight' | 'hotel' | 'train' | 'other'
+  summary: string
+}
 
 const SYSTEM = `You extract international travel trips from a traveler's booking emails, to populate a Schengen 90/180-day tracker and a visited-countries map.
 
@@ -39,18 +34,33 @@ Rules:
 - countryCode: ISO 3166-1 alpha-2 (ES, CZ, DE, FR, IT, ...). countryName: English country name.
 - Dates in YYYY-MM-DD. For a stay, entryDate = check-in, exitDate = check-out. For a one-way flight or a single train journey, use the travel date for BOTH entryDate and exitDate. If the year is missing, infer the most likely year from context.
 - confidence: "high" when dates and country are explicit, "medium" when inferred, "low" when uncertain.
-- kind: flight | hotel | train | other.
+- kind: one of flight, hotel, train, other.
 - summary: a short human label, e.g. "Ryanair flight to Spain" or "Hotel in Prague".
 - sourceIndex: the EMAIL number you extracted this from.
 - Prefer one trip spanning a stay in a country; only output separate arrival/departure trips when clearly warranted.
-- Output an empty trips array if nothing qualifies.`
 
-/** Run Claude over the emails and return validated proposed trips. */
+Respond with ONLY a JSON object (no prose, no markdown code fences) in exactly this shape:
+{"trips":[{"sourceIndex":0,"countryCode":"ES","countryName":"Spain","entryDate":"2026-08-30","exitDate":"2026-10-11","confidence":"high","kind":"hotel","summary":"Hotel in Barcelona"}]}
+If no trips qualify, respond with {"trips":[]}.`
+
+/** Pull the JSON object out of the model's text (tolerating stray prose/fences). */
+function parseTripsJson(text: string): ProposedTrip[] {
+  const start = text.indexOf('{')
+  const end = text.lastIndexOf('}')
+  if (start === -1 || end === -1 || end < start) return []
+  try {
+    const parsed = JSON.parse(text.slice(start, end + 1)) as { trips?: unknown }
+    return Array.isArray(parsed.trips) ? (parsed.trips as ProposedTrip[]) : []
+  } catch {
+    return []
+  }
+}
+
+/** Run Claude over the emails and return proposed trips. */
 export async function extractTripsFromEmails(emails: EmailContent[]): Promise<ProposedTrip[]> {
   if (emails.length === 0) return []
 
   const { default: Anthropic } = await import('@anthropic-ai/sdk')
-  const { zodOutputFormat } = await import('@anthropic-ai/sdk/helpers/zod')
   const client = new Anthropic()
 
   const rendered = emails
@@ -60,7 +70,7 @@ export async function extractTripsFromEmails(emails: EmailContent[]): Promise<Pr
     )
     .join('\n\n')
 
-  const response = await client.messages.parse({
+  const response = await client.messages.create({
     model: 'claude-haiku-4-5',
     max_tokens: 4000,
     system: SYSTEM,
@@ -70,8 +80,9 @@ export async function extractTripsFromEmails(emails: EmailContent[]): Promise<Pr
         content: `Extract trips from these ${emails.length} booking email(s):\n\n${rendered}`,
       },
     ],
-    output_config: { format: zodOutputFormat(ExtractionSchema) },
   })
 
-  return response.parsed_output?.trips ?? []
+  const text = response.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
+
+  return parseTripsJson(text)
 }
