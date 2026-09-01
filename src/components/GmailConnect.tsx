@@ -3,7 +3,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { useTripStore } from '../lib/useTripStore'
 import { useVisitedStore } from '../lib/useVisitedStore'
 import { SCHENGEN_COUNTRIES } from '../lib/schengenCountries'
-import { gmailFeatureAllowed } from '../lib/gmailFeature'
+import { isOwner } from '../lib/invites'
 import {
   fetchGmailStatus,
   extractTrips,
@@ -141,7 +141,8 @@ export function GmailConnect() {
   const [applied, setApplied] = useState<Record<number, 'added' | 'error'>>({})
   const [applyingAll, setApplyingAll] = useState(false)
 
-  const allowed = gmailFeatureAllowed(user?.email)
+  const owner = isOwner(user?.email)
+  const canUse = owner || status?.allowed === true
 
   // Keys of trips already in the tracker, to avoid proposing duplicates.
   const existingTripKeys = useMemo(
@@ -179,9 +180,10 @@ export function GmailConnect() {
     window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''))
   }, [])
 
-  // Load connection status for approved, signed-in users.
+  // Load connection status for any signed-in user; it also tells us whether the
+  // server considers them approved (owner or on the Firestore allowlist).
   useEffect(() => {
-    if (!user || !allowed) {
+    if (!user) {
       setStatus(null)
       return
     }
@@ -196,9 +198,9 @@ export function GmailConnect() {
     return () => {
       cancelled = true
     }
-  }, [user, allowed, notice])
+  }, [user, notice])
 
-  if (!user || !allowed) return null
+  if (!user || !canUse) return null
 
   const connect = async () => {
     setBusy(true)

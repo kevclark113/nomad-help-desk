@@ -21,9 +21,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const user = await requireUser(req)
-    if (!isAllowed(user.email)) throw new HttpError(403, 'This account is not approved for Gmail import.')
-
     const db = await adminDb()
+    if (!(await isAllowed(db, user.email)))
+      throw new HttpError(403, 'This account is not approved for Gmail import.')
+
     const tokenDoc = (await db.collection('gmailTokens').doc(user.uid).get()).data()
     if (!tokenDoc?.refreshToken) throw new HttpError(400, 'Gmail is not connected.')
 

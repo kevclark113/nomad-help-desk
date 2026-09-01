@@ -11,6 +11,8 @@ import { TripsList } from './components/TripsList'
 import { PlanTrip } from './components/PlanTrip'
 import { AccountPanel } from './components/AccountPanel'
 import { GmailConnect } from './components/GmailConnect'
+import { InviteAccept } from './components/InviteAccept'
+import { InvitesPanel } from './components/InvitesPanel'
 import { MapView } from './components/MapView'
 import { firebaseEnabled } from './lib/firebase'
 
@@ -88,6 +90,8 @@ export default function App() {
         </h1>
       </header>
 
+      {firebaseEnabled && <InviteAccept />}
+
       <TabBar view={view} onChange={setView} />
 
       {view === 'map' ? (
@@ -126,6 +130,8 @@ export default function App() {
               </h2>
               <PlanTrip trips={trips} />
             </Panel>
+
+            {firebaseEnabled && <InvitesPanel />}
 
             {firebaseEnabled && <GmailConnect />}
 
