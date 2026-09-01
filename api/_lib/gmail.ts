@@ -73,3 +73,66 @@ export async function searchBookingEmails(accessToken: string, max = 20): Promis
 
   return headers.filter((h): h is EmailHeader => h !== null)
 }
+
+export interface EmailContent {
+  id: string
+  subject: string
+  from: string
+  date: string
+  body: string
+}
+
+type GmailPart = {
+  mimeType?: string
+  body?: { data?: string }
+  parts?: GmailPart[]
+}
+
+/** Recursively pull plain-text (falling back to stripped HTML) from a Gmail payload. */
+function extractPlainText(part: GmailPart | undefined): string {
+  if (!part) return ''
+  if (part.mimeType === 'text/plain' && part.body?.data) {
+    return Buffer.from(part.body.data, 'base64url').toString('utf8')
+  }
+  for (const p of part.parts ?? []) {
+    const t = extractPlainText(p)
+    if (t) return t
+  }
+  if (part.mimeType === 'text/html' && part.body?.data) {
+    return Buffer.from(part.body.data, 'base64url')
+      .toString('utf8')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+  }
+  return ''
+}
+
+/** Fetch full booking-candidate emails with their text bodies, for AI extraction. */
+export async function getBookingEmailContents(accessToken: string, max = 12): Promise<EmailContent[]> {
+  const listUrl = new URL('https://gmail.googleapis.com/gmail/v1/users/me/messages')
+  listUrl.searchParams.set('q', BOOKING_QUERY)
+  listUrl.searchParams.set('maxResults', String(max))
+  const listRes = await fetch(listUrl, { headers: { Authorization: `Bearer ${accessToken}` } })
+  if (!listRes.ok) throw new Error(`Gmail search failed (${listRes.status}): ${await listRes.text()}`)
+  const list = (await listRes.json()) as { messages?: Array<{ id: string }> }
+  const ids = (list.messages ?? []).map((m) => m.id)
+
+  const contents = await Promise.all(
+    ids.map(async (id): Promise<EmailContent | null> => {
+      const mUrl = new URL(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}`)
+      mUrl.searchParams.set('format', 'full')
+      const mRes = await fetch(mUrl, { headers: { Authorization: `Bearer ${accessToken}` } })
+      if (!mRes.ok) return null
+      const m = (await mRes.json()) as {
+        snippet?: string
+        payload?: GmailPart & { headers?: Array<{ name: string; value: string }> }
+      }
+      const hs = m.payload?.headers ?? []
+      const get = (n: string) => hs.find((h) => h.name.toLowerCase() === n.toLowerCase())?.value ?? ''
+      const body = (extractPlainText(m.payload) || m.snippet || '').slice(0, 2500)
+      return { id, subject: get('Subject'), from: get('From'), date: get('Date'), body }
+    }),
+  )
+
+  return contents.filter((c): c is EmailContent => c !== null)
+}

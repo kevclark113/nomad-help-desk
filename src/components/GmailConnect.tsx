@@ -3,10 +3,11 @@ import { useAuth } from '../auth/AuthProvider'
 import { gmailFeatureAllowed } from '../lib/gmailFeature'
 import {
   fetchGmailStatus,
-  scanGmail,
+  extractTrips,
   startGmailConnect,
   type GmailStatus,
-  type ScanResult,
+  type ExtractResult,
+  type ProposedTrip,
 } from '../lib/gmailApi'
 import { color } from '../theme/tokens'
 import { Panel } from '../theme/components/ui'
@@ -24,12 +25,62 @@ function reasonText(reason: string | null): string {
   }
 }
 
-/** Turn a raw From header ("Booking.com <no-reply@booking.com>") into a short label. */
-function shortFrom(from: string): string {
-  const name = from.match(/^\s*"?([^"<]+?)"?\s*</)?.[1]?.trim()
-  if (name) return name
-  const email = from.match(/<([^>]+)>/)?.[1] ?? from
-  return email.trim()
+const CONFIDENCE_COLOR: Record<ProposedTrip['confidence'], string> = {
+  high: color.olive,
+  medium: color.marigold,
+  low: color.coral,
+}
+
+const KIND_ICON: Record<ProposedTrip['kind'], string> = {
+  flight: '✈️',
+  hotel: '🏨',
+  train: '🚆',
+  other: '📍',
+}
+
+/** One extracted trip, shown as a compact card for review. */
+function TripProposal({ trip }: { trip: ProposedTrip }) {
+  const dates =
+    trip.entryDate === trip.exitDate ? trip.entryDate : `${trip.entryDate} → ${trip.exitDate}`
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '10px 12px',
+        borderRadius: 12,
+        background: 'rgba(0,0,0,0.25)',
+        border: '1px solid rgba(255,255,255,0.08)',
+      }}
+    >
+      <span aria-hidden="true" style={{ fontSize: 18 }}>
+        {KIND_ICON[trip.kind]}
+      </span>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ color: color.paper, fontSize: 14, fontWeight: 600 }}>
+          {trip.summary || trip.countryName}
+        </div>
+        <div style={{ color: color.muted, fontSize: 12 }}>
+          {trip.countryName}
+          {trip.countryCode ? ` (${trip.countryCode})` : ''} · {dates}
+        </div>
+      </div>
+      <span
+        title={`${trip.confidence} confidence`}
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: CONFIDENCE_COLOR[trip.confidence],
+          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
+          flex: '0 0 auto',
+        }}
+      >
+        {trip.confidence}
+      </span>
+    </div>
+  )
 }
 
 export function GmailConnect() {
@@ -39,7 +90,7 @@ export function GmailConnect() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
-  const [scanResult, setScanResult] = useState<ScanResult | null>(null)
+  const [scanResult, setScanResult] = useState<ExtractResult | null>(null)
   const [scanError, setScanError] = useState<string | null>(null)
 
   const allowed = gmailFeatureAllowed(user?.email)
@@ -94,7 +145,7 @@ export function GmailConnect() {
     setScanError(null)
     setScanResult(null)
     try {
-      setScanResult(await scanGmail(user))
+      setScanResult(await extractTrips(user))
     } catch (e) {
       setScanError((e as Error).message)
     } finally {
@@ -127,30 +178,26 @@ export function GmailConnect() {
 
             <div>
               <Button variant="chipTeal" onClick={() => void scan()} disabled={scanning}>
-                {scanning ? 'Scanning…' : 'Scan now'}
+                {scanning ? 'Scanning your inbox…' : 'Scan now'}
               </Button>
             </div>
 
             {scanResult && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <span style={{ color: color.paper, fontSize: 13, fontWeight: 600 }}>
-                  {scanResult.count === 0
-                    ? 'No booking-related emails found yet.'
-                    : `Found ${scanResult.count} booking-related email${scanResult.count === 1 ? '' : 's'}:`}
+                  {scanResult.trips.length === 0
+                    ? `Scanned ${scanResult.scanned} booking email${scanResult.scanned === 1 ? '' : 's'} — no trips found.`
+                    : `Found ${scanResult.trips.length} trip${scanResult.trips.length === 1 ? '' : 's'} in ${scanResult.scanned} booking email${scanResult.scanned === 1 ? '' : 's'}:`}
                 </span>
-                {scanResult.emails.length > 0 && (
-                  <ul style={{ margin: 0, paddingLeft: 18, color: color.muted, fontSize: 12, lineHeight: 1.5 }}>
-                    {scanResult.emails.map((e, i) => (
-                      <li key={i}>
-                        <span style={{ color: color.paper }}>{e.subject || '(no subject)'}</span>
-                        {' — '}
-                        {shortFrom(e.from)}
-                      </li>
+                {scanResult.trips.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {scanResult.trips.map((t, i) => (
+                      <TripProposal key={i} trip={t} />
                     ))}
-                  </ul>
+                  </div>
                 )}
                 <span style={{ color: color.muted, fontSize: 11, marginTop: 2 }}>
-                  Reading your inbox works. Next: turning these into trips automatically — no action needed from you.
+                  Next: these get added to your tracker automatically — no action needed from you.
                 </span>
               </div>
             )}
