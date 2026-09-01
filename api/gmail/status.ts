@@ -14,7 +14,8 @@ import { adminDb } from '../_lib/firebaseAdmin'
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const user = await requireUser(req)
-    const data = (await adminDb().collection('gmailTokens').doc(user.uid).get()).data()
+    const db = await adminDb()
+    const data = (await db.collection('gmailTokens').doc(user.uid).get()).data()
     res.status(200).json({
       allowed: isAllowed(user.email),
       connected: Boolean(data?.refreshToken),

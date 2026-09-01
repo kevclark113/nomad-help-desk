@@ -30,8 +30,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return fail('bad_state')
     }
 
+    const db = await adminDb()
+
     // One-time state check: nonce must match and be recent, then it's consumed.
-    const stateRef = adminDb().collection('gmailOAuthState').doc(parsed.uid)
+    const stateRef = db.collection('gmailOAuthState').doc(parsed.uid)
     const saved = (await stateRef.get()).data()
     if (!saved || saved.nonce !== parsed.nonce || Date.now() - saved.createdAt > STATE_TTL_MS) {
       return fail('state_expired')
@@ -76,7 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Secret refresh token — server-only collection (clients denied by rules).
-    await adminDb().collection('gmailTokens').doc(parsed.uid).set({
+    await db.collection('gmailTokens').doc(parsed.uid).set({
       refreshToken: tokens.refresh_token,
       scope: tokens.scope ?? GMAIL_SCOPE,
       gmailAddress,

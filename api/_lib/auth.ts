@@ -24,8 +24,11 @@ export async function requireUser(req: VercelRequest): Promise<AuthedUser> {
   const header = req.headers.authorization ?? ''
   const match = /^Bearer (.+)$/.exec(header)
   if (!match) throw new HttpError(401, 'Missing Authorization bearer token')
+  // Admin init errors propagate (surface as a real 500 message); only a failed
+  // token verification is treated as an auth error.
+  const auth = await adminAuth()
   try {
-    const decoded = await adminAuth().verifyIdToken(match[1])
+    const decoded = await auth.verifyIdToken(match[1])
     return { uid: decoded.uid, email: decoded.email ?? null }
   } catch {
     throw new HttpError(401, 'Invalid or expired session')

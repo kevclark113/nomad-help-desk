@@ -26,8 +26,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       throw new HttpError(403, 'This account is not approved for Gmail import.')
     }
 
+    const db = await adminDb()
     const nonce = randomBytes(16).toString('hex')
-    await adminDb().collection('gmailOAuthState').doc(user.uid).set({
+    await db.collection('gmailOAuthState').doc(user.uid).set({
       nonce,
       createdAt: Date.now(),
     })
