@@ -23,26 +23,31 @@ export async function fetchGmailStatus(user: User): Promise<GmailStatus> {
   return (await res.json()) as GmailStatus
 }
 
-export interface ScannedEmail {
-  subject: string
-  from: string
-  date: string
+export interface ProposedTrip {
+  sourceIndex: number
+  countryCode: string
+  countryName: string
+  entryDate: string
+  exitDate: string
+  confidence: 'high' | 'medium' | 'low'
+  kind: 'flight' | 'hotel' | 'train' | 'other'
+  summary: string
 }
 
-export interface ScanResult {
-  count: number
-  emails: ScannedEmail[]
+export interface ExtractResult {
+  scanned: number
+  trips: ProposedTrip[]
 }
 
-/** Runs a manual Gmail scan and returns the booking-candidate emails found. */
-export async function scanGmail(user: User): Promise<ScanResult> {
+/** Scans Gmail and runs Claude extraction, returning proposed trips for review. */
+export async function extractTrips(user: User): Promise<ExtractResult> {
   const token = await user.getIdToken()
-  const res = await fetch('/api/gmail/scan', {
+  const res = await fetch('/api/gmail/extract', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) throw new Error(await errorMessage(res, 'Scan failed'))
-  return (await res.json()) as ScanResult
+  return (await res.json()) as ExtractResult
 }
 
 /** Starts the OAuth flow by redirecting the browser to Google's consent screen. */
