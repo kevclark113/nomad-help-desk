@@ -7,7 +7,7 @@
  * comma-separated list of emails, or add to DEFAULT_ALLOWLIST below (and mirror
  * it in src/lib/gmailFeature.ts so their UI shows the feature).
  */
-const DEFAULT_ALLOWLIST = ['kevclark113@gmail.com']
+const DEFAULT_ALLOWLIST = ['kevclark113@gmail.com', 'jenniferaclark315@gmail.com']
 
 function allowlist(): string[] {
   const env = process.env.GMAIL_ALLOWLIST
