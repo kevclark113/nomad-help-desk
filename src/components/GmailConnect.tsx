@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { gmailFeatureAllowed } from '../lib/gmailFeature'
-import { fetchGmailStatus, startGmailConnect, type GmailStatus } from '../lib/gmailApi'
+import {
+  fetchGmailStatus,
+  scanGmail,
+  startGmailConnect,
+  type GmailStatus,
+  type ScanResult,
+} from '../lib/gmailApi'
 import { color } from '../theme/tokens'
 import { Panel } from '../theme/components/ui'
 import { Button } from '../theme/components/ui'
@@ -18,12 +24,23 @@ function reasonText(reason: string | null): string {
   }
 }
 
+/** Turn a raw From header ("Booking.com <no-reply@booking.com>") into a short label. */
+function shortFrom(from: string): string {
+  const name = from.match(/^\s*"?([^"<]+?)"?\s*</)?.[1]?.trim()
+  if (name) return name
+  const email = from.match(/<([^>]+)>/)?.[1] ?? from
+  return email.trim()
+}
+
 export function GmailConnect() {
   const { user } = useAuth()
   const [status, setStatus] = useState<GmailStatus | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [scanning, setScanning] = useState(false)
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null)
+  const [scanError, setScanError] = useState<string | null>(null)
 
   const allowed = gmailFeatureAllowed(user?.email)
 
@@ -72,6 +89,19 @@ export function GmailConnect() {
     }
   }
 
+  const scan = async () => {
+    setScanning(true)
+    setScanError(null)
+    setScanResult(null)
+    try {
+      setScanResult(await scanGmail(user))
+    } catch (e) {
+      setScanError((e as Error).message)
+    } finally {
+      setScanning(false)
+    }
+  }
+
   return (
     <Panel>
       <h2 className="panel-heading" style={{ fontSize: 20, margin: '0 0 12px', color: color.paper }}>
@@ -84,14 +114,47 @@ export function GmailConnect() {
         </p>
 
         {status?.connected ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-            <span
-              aria-hidden="true"
-              style={{ width: 8, height: 8, borderRadius: '50%', background: color.olive }}
-            />
-            <span style={{ color: color.paper, fontSize: 14, fontWeight: 600 }}>
-              Gmail connected{status.gmailAddress ? ` · ${status.gmailAddress}` : ''}
-            </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <span
+                aria-hidden="true"
+                style={{ width: 8, height: 8, borderRadius: '50%', background: color.olive }}
+              />
+              <span style={{ color: color.paper, fontSize: 14, fontWeight: 600 }}>
+                Gmail connected{status.gmailAddress ? ` · ${status.gmailAddress}` : ''}
+              </span>
+            </div>
+
+            <div>
+              <Button variant="chipTeal" onClick={() => void scan()} disabled={scanning}>
+                {scanning ? 'Scanning…' : 'Scan now'}
+              </Button>
+            </div>
+
+            {scanResult && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <span style={{ color: color.paper, fontSize: 13, fontWeight: 600 }}>
+                  {scanResult.count === 0
+                    ? 'No booking-related emails found yet.'
+                    : `Found ${scanResult.count} booking-related email${scanResult.count === 1 ? '' : 's'}:`}
+                </span>
+                {scanResult.emails.length > 0 && (
+                  <ul style={{ margin: 0, paddingLeft: 18, color: color.muted, fontSize: 12, lineHeight: 1.5 }}>
+                    {scanResult.emails.map((e, i) => (
+                      <li key={i}>
+                        <span style={{ color: color.paper }}>{e.subject || '(no subject)'}</span>
+                        {' — '}
+                        {shortFrom(e.from)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <span style={{ color: color.muted, fontSize: 11, marginTop: 2 }}>
+                  Reading your inbox works. Next: turning these into trips automatically — no action needed from you.
+                </span>
+              </div>
+            )}
+            {scanError && <span style={{ color: color.coral, fontSize: 12 }}>{scanError}</span>}
           </div>
         ) : (
           <div>
