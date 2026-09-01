@@ -1,5 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
+import { useTripStore } from '../lib/useTripStore'
+import { useVisitedStore } from '../lib/useVisitedStore'
+import { SCHENGEN_COUNTRIES } from '../lib/schengenCountries'
 import { gmailFeatureAllowed } from '../lib/gmailFeature'
 import {
   fetchGmailStatus,
@@ -25,6 +28,13 @@ function reasonText(reason: string | null): string {
   }
 }
 
+const SCHENGEN_CODES = new Set(SCHENGEN_COUNTRIES.map((c) => c.code))
+
+/** Schengen countries become tracker trips (count toward 90/180); others go on the map. */
+function destinationFor(trip: ProposedTrip): 'trip' | 'map' {
+  return SCHENGEN_CODES.has(trip.countryCode?.toUpperCase()) ? 'trip' : 'map'
+}
+
 const CONFIDENCE_COLOR: Record<ProposedTrip['confidence'], string> = {
   high: color.olive,
   medium: color.marigold,
@@ -38,10 +48,25 @@ const KIND_ICON: Record<ProposedTrip['kind'], string> = {
   other: '📍',
 }
 
-/** One extracted trip, shown as a compact card for review. */
-function TripProposal({ trip }: { trip: ProposedTrip }) {
+type ApplyState = 'new' | 'exists' | 'added' | 'error'
+
+/** One extracted trip, shown as a compact card with an add action. */
+function TripProposal({
+  trip,
+  destination,
+  state,
+  busy,
+  onAdd,
+}: {
+  trip: ProposedTrip
+  destination: 'trip' | 'map'
+  state: ApplyState
+  busy: boolean
+  onAdd: () => void
+}) {
   const dates =
     trip.entryDate === trip.exitDate ? trip.entryDate : `${trip.entryDate} → ${trip.exitDate}`
+
   return (
     <div
       style={{
@@ -63,9 +88,11 @@ function TripProposal({ trip }: { trip: ProposedTrip }) {
         </div>
         <div style={{ color: color.muted, fontSize: 12 }}>
           {trip.countryName}
-          {trip.countryCode ? ` (${trip.countryCode})` : ''} · {dates}
+          {trip.countryCode ? ` (${trip.countryCode.toUpperCase()})` : ''} · {dates}
+          {destination === 'map' ? ' · visited map (non-Schengen)' : ' · tracker'}
         </div>
       </div>
+
       <span
         title={`${trip.confidence} confidence`}
         style={{
@@ -79,12 +106,31 @@ function TripProposal({ trip }: { trip: ProposedTrip }) {
       >
         {trip.confidence}
       </span>
+
+      <span style={{ flex: '0 0 auto', minWidth: 70, textAlign: 'right' }}>
+        {state === 'new' && (
+          <Button variant="ghost" onClick={onAdd} disabled={busy} style={{ padding: '6px 12px' }}>
+            Add
+          </Button>
+        )}
+        {state === 'added' && (
+          <span style={{ color: color.olive, fontSize: 12, fontWeight: 600 }}>Added ✓</span>
+        )}
+        {state === 'exists' && (
+          <span style={{ color: color.muted, fontSize: 12 }}>
+            {destination === 'trip' ? 'In tracker' : 'On map'}
+          </span>
+        )}
+        {state === 'error' && <span style={{ color: color.coral, fontSize: 12 }}>Failed</span>}
+      </span>
     </div>
   )
 }
 
 export function GmailConnect() {
   const { user } = useAuth()
+  const { trips, addTrip } = useTripStore()
+  const { marks, setMark } = useVisitedStore()
   const [status, setStatus] = useState<GmailStatus | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -92,15 +138,40 @@ export function GmailConnect() {
   const [scanning, setScanning] = useState(false)
   const [scanResult, setScanResult] = useState<ExtractResult | null>(null)
   const [scanError, setScanError] = useState<string | null>(null)
+  const [applied, setApplied] = useState<Record<number, 'added' | 'error'>>({})
+  const [applyingAll, setApplyingAll] = useState(false)
 
   const allowed = gmailFeatureAllowed(user?.email)
+
+  // Keys of trips already in the tracker, to avoid proposing duplicates.
+  const existingTripKeys = useMemo(
+    () =>
+      new Set(
+        trips
+          .filter((t) => t.countryCode)
+          .map((t) => `${t.countryCode!.toUpperCase()}|${t.entryDate}|${t.exitDate}`),
+      ),
+    [trips],
+  )
+
+  // What state a proposal is in: already added this session, already present, or new.
+  const stateFor = (trip: ProposedTrip, i: number): ApplyState => {
+    if (applied[i] === 'added') return 'added'
+    if (applied[i] === 'error') return 'error'
+    const code = trip.countryCode?.toUpperCase()
+    if (!code) return 'new'
+    if (destinationFor(trip) === 'trip') {
+      return existingTripKeys.has(`${code}|${trip.entryDate}|${trip.exitDate}`) ? 'exists' : 'new'
+    }
+    return marks.get(code) === 'visited' ? 'exists' : 'new'
+  }
 
   // Surface the ?gmail= result after returning from Google, then clean the URL.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const g = params.get('gmail')
     if (!g) return
-    if (g === 'connected') setNotice('Gmail connected. Email scanning is coming soon.')
+    if (g === 'connected') setNotice('Gmail connected. Scan your inbox to import trips.')
     else if (g === 'error') setError(`Couldn’t connect Gmail. ${reasonText(params.get('reason'))}`)
     params.delete('gmail')
     params.delete('reason')
@@ -144,6 +215,7 @@ export function GmailConnect() {
     setScanning(true)
     setScanError(null)
     setScanResult(null)
+    setApplied({})
     try {
       setScanResult(await extractTrips(user))
     } catch (e) {
@@ -152,6 +224,39 @@ export function GmailConnect() {
       setScanning(false)
     }
   }
+
+  const applyTrip = async (trip: ProposedTrip, i: number) => {
+    const code = trip.countryCode?.toUpperCase()
+    if (!code || !trip.entryDate || !trip.exitDate) return
+    try {
+      if (destinationFor(trip) === 'trip') {
+        await addTrip({
+          entryDate: trip.entryDate,
+          exitDate: trip.exitDate,
+          countryCode: code,
+          note: trip.summary,
+        })
+      } else {
+        await setMark(code, 'visited')
+      }
+      setApplied((a) => ({ ...a, [i]: 'added' }))
+    } catch {
+      setApplied((a) => ({ ...a, [i]: 'error' }))
+    }
+  }
+
+  const applyAll = async () => {
+    if (!scanResult) return
+    setApplyingAll(true)
+    for (let i = 0; i < scanResult.trips.length; i++) {
+      if (stateFor(scanResult.trips[i], i) === 'new') await applyTrip(scanResult.trips[i], i)
+    }
+    setApplyingAll(false)
+  }
+
+  const newCount = scanResult
+    ? scanResult.trips.filter((t, i) => stateFor(t, i) === 'new').length
+    : 0
 
   return (
     <Panel>
@@ -176,10 +281,15 @@ export function GmailConnect() {
               </span>
             </div>
 
-            <div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <Button variant="chipTeal" onClick={() => void scan()} disabled={scanning}>
                 {scanning ? 'Scanning your inbox…' : 'Scan now'}
               </Button>
+              {newCount > 0 && (
+                <Button variant="chip" onClick={() => void applyAll()} disabled={applyingAll}>
+                  {applyingAll ? 'Adding…' : `Add all ${newCount}`}
+                </Button>
+              )}
             </div>
 
             {scanResult && (
@@ -192,12 +302,20 @@ export function GmailConnect() {
                 {scanResult.trips.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {scanResult.trips.map((t, i) => (
-                      <TripProposal key={i} trip={t} />
+                      <TripProposal
+                        key={i}
+                        trip={t}
+                        destination={destinationFor(t)}
+                        state={stateFor(t, i)}
+                        busy={applyingAll}
+                        onAdd={() => void applyTrip(t, i)}
+                      />
                     ))}
                   </div>
                 )}
                 <span style={{ color: color.muted, fontSize: 11, marginTop: 2 }}>
-                  Next: these get added to your tracker automatically — no action needed from you.
+                  Schengen countries are added as tracker trips; other countries are marked on your
+                  visited map. Soon this will happen automatically in the background.
                 </span>
               </div>
             )}
