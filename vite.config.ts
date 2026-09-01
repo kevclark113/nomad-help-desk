@@ -10,6 +10,13 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
+      workbox: {
+        // Don't let the SPA navigation fallback serve index.html for server
+        // routes — otherwise the OAuth callback (a top-level navigation to
+        // /api/gmail/callback) is hijacked by the service worker and the app
+        // shell renders instead of the redirect running. Let /api hit the network.
+        navigateFallbackDenylist: [/^\/api\//],
+      },
       manifest: {
         name: 'Nomad Help Desk',
         short_name: 'Nomad',
