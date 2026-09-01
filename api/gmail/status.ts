@@ -15,9 +15,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const user = await requireUser(req)
     const db = await adminDb()
-    const data = (await db.collection('gmailTokens').doc(user.uid).get()).data()
+    const [allowed, data] = await Promise.all([
+      isAllowed(db, user.email),
+      db
+        .collection('gmailTokens')
+        .doc(user.uid)
+        .get()
+        .then((s) => s.data()),
+    ])
     res.status(200).json({
-      allowed: isAllowed(user.email),
+      allowed,
       connected: Boolean(data?.refreshToken),
       gmailAddress: (data?.gmailAddress as string) ?? null,
     })

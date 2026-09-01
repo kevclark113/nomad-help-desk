@@ -43,3 +43,7 @@ export async function adminAuth() {
 export async function adminDb() {
   return (await loadAdmin()).db
 }
+
+// Inferred service types (avoids importing firebase-admin types at module top).
+export type AdminAuth = Awaited<ReturnType<typeof adminAuth>>
+export type AdminDb = Awaited<ReturnType<typeof adminDb>>
