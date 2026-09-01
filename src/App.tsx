@@ -10,6 +10,7 @@ import { TripEditor } from './components/TripEditor'
 import { TripsList } from './components/TripsList'
 import { PlanTrip } from './components/PlanTrip'
 import { AccountPanel } from './components/AccountPanel'
+import { GmailConnect } from './components/GmailConnect'
 import { MapView } from './components/MapView'
 import { firebaseEnabled } from './lib/firebase'
 
@@ -125,6 +126,8 @@ export default function App() {
               </h2>
               <PlanTrip trips={trips} />
             </Panel>
+
+            {firebaseEnabled && <GmailConnect />}
 
             {firebaseEnabled && (
               <Panel>

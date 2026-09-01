@@ -19,6 +19,7 @@
     "dexie": "^4.0.10",
     "dexie-react-hooks": "^4.4.0",
     "firebase": "^12.18.0",
+    "firebase-admin": "^13.0.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "topojson-client": "^3.1.0",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@types/d3-geo": "^3.1.1",
+    "@vercel/node": "^5.1.10",
     "@types/d3-selection": "^3.0.11",
     "@types/d3-zoom": "^3.0.8",
     "@types/react": "^18.3.12",
