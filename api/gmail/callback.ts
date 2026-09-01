@@ -8,8 +8,8 @@
  * the app with a `?gmail=connected` or `?gmail=error&reason=...` flag.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { adminDb } from '../_lib/firebaseAdmin'
-import { GMAIL_SCOPE, baseUrl, redirectUri } from '../_lib/google'
+import { adminDb } from '../_lib/firebaseAdmin.js'
+import { GMAIL_SCOPE, baseUrl, redirectUri } from '../_lib/google.js'
 
 const STATE_TTL_MS = 10 * 60 * 1000 // 10 minutes
 

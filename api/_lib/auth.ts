@@ -1,6 +1,6 @@
 /** Request auth helpers for the Gmail API routes. */
 import type { VercelRequest } from '@vercel/node'
-import { adminAuth } from './firebaseAdmin'
+import { adminAuth } from './firebaseAdmin.js'
 
 export class HttpError extends Error {
   constructor(
