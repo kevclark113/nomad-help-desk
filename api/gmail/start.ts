@@ -9,10 +9,10 @@
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { randomBytes } from 'node:crypto'
-import { HttpError, requireUser } from '../_lib/auth'
-import { isAllowed } from '../_lib/allowlist'
-import { adminDb } from '../_lib/firebaseAdmin'
-import { GMAIL_SCOPE, redirectUri } from '../_lib/google'
+import { HttpError, requireUser } from '../_lib/auth.js'
+import { isAllowed } from '../_lib/allowlist.js'
+import { adminDb } from '../_lib/firebaseAdmin.js'
+import { GMAIL_SCOPE, redirectUri } from '../_lib/google.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
