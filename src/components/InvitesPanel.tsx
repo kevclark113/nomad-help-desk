@@ -5,6 +5,7 @@ import {
   isOwner,
   listInvites,
   revokeInvite,
+  runAutoScan,
   type AllowedUser,
   type InviteRecord,
 } from '../lib/invites'
@@ -45,6 +46,8 @@ export function InvitesPanel() {
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [scanBusy, setScanBusy] = useState(false)
+  const [scanMsg, setScanMsg] = useState<string | null>(null)
 
   const owner = isOwner(user?.email)
 
@@ -79,6 +82,20 @@ export function InvitesPanel() {
       setError((e as Error).message)
     } finally {
       setBusy(false)
+    }
+  }
+
+  const runScan = async () => {
+    if (!user) return
+    setScanBusy(true)
+    setScanMsg(null)
+    try {
+      const r = await runAutoScan(user)
+      setScanMsg(`Scanned ${r.users} connected ${r.users === 1 ? 'user' : 'users'} · added ${r.totalAdded} new ${r.totalAdded === 1 ? 'trip' : 'trips'}.`)
+    } catch (e) {
+      setScanMsg((e as Error).message)
+    } finally {
+      setScanBusy(false)
     }
   }
 
@@ -120,6 +137,24 @@ export function InvitesPanel() {
         </div>
 
         {error && <span style={{ color: color.coral, fontSize: 12 }}>{error}</span>}
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            flexWrap: 'wrap',
+            paddingTop: 10,
+            borderTop: '1px solid rgba(255,255,255,0.08)',
+          }}
+        >
+          <Button variant="ghost" onClick={() => void runScan()} disabled={scanBusy}>
+            {scanBusy ? 'Scanning everyone…' : 'Run auto-scan now'}
+          </Button>
+          <span style={{ color: color.muted, fontSize: 12 }}>
+            {scanMsg ?? 'Scans every connected inbox and auto-adds high-confidence trips. Runs daily on its own.'}
+          </span>
+        </div>
 
         {loaded && invites.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

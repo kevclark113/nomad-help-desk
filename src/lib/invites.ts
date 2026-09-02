@@ -66,3 +66,10 @@ export async function revokeInvite(user: User, token: string): Promise<void> {
 export async function redeemInvite(user: User, token: string): Promise<{ ok: true; email: string }> {
   return authedPost(user, '/api/invite/redeem', { token })
 }
+
+/** Owner-only: manually trigger the background scan for all connected users. */
+export async function runAutoScan(
+  user: User,
+): Promise<{ users: number; totalAdded: number }> {
+  return authedPost(user, '/api/cron/scan')
+}
