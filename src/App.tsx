@@ -13,6 +13,7 @@ import { AccountPanel } from './components/AccountPanel'
 import { GmailConnect } from './components/GmailConnect'
 import { InviteAccept } from './components/InviteAccept'
 import { InvitesPanel } from './components/InvitesPanel'
+import { ScanNotice } from './components/ScanNotice'
 import { MapView } from './components/MapView'
 import { firebaseEnabled } from './lib/firebase'
 
@@ -91,6 +92,7 @@ export default function App() {
       </header>
 
       {firebaseEnabled && <InviteAccept />}
+      {firebaseEnabled && <ScanNotice />}
 
       <TabBar view={view} onChange={setView} />
 
